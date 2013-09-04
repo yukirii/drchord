@@ -1,0 +1,6 @@
+/.bundle
+/Gemfile.lock
+/tmp
+
+config.yml
+.*.swp
