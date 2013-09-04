@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-require 'optparse'
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 begin
@@ -11,10 +10,14 @@ rescue LoadError
   exit
 end
 
-config = {:port => 3000, :host => nil}
+require 'optparse'
+require './lib/node.rb'
+
+options = {}
 OptionParser.new do |opt|
-  opt.on('-p', '--port', 'port') {|v| config[:port] = v }
-  opt.on('-e', '--exists_host', 'exists host IP_ADDR:PORT') {|v| config[:host] = v }
+  opt.on('-i --ip', 'ip address') {|v| options[:ip] = v }
+  opt.on('-p --port', 'port') {|v| options[:port] = v }
+  opt.on('-e --existing_node', 'existing node IP_ADDR:PORT') {|v| options[:host] = v }
   opt.on_tail('-h', '--help', 'show this message') do |v|
     opt.banner = "Usage: ruby #{File.basename($0)} [options]"
     puts opt
@@ -28,4 +31,5 @@ OptionParser.new do |opt|
     exit
   end
 end
-p config
+
+node = DRChord::Node.new(options)
