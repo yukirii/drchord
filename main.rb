@@ -43,20 +43,27 @@ else
   node.join(options[:existing_node])
 end
 
-loop do
-  node.stabilize
-  node.fix_fingers
-  node.fix_successor_list
+begin
+  loop do
+    node.stabilize
+    node.fix_fingers
+    node.fix_predecessor
 
-  puts "succ. #{node.successor[:uri]}  pred. #{node.predecessor[:uri]}"
-  puts "finger_table"
-  node.finger.each_with_index do |node, i|
-    puts "#{"%02d" % i} : #{node}"
+    puts "succ. #{node.successor}"
+    puts "pred. #{node.predecessor}"
+
+    puts "finger_table"
+    node.finger.each_with_index do |node, i|
+      puts "#{"%02d" % i} : #{node}"
+    end
+
+    puts "successor_list"
+    node.successor_list.each_with_index do |node, i|
+      puts "#{"%02d" % i} : #{node}"
+    end
+    puts
+    sleep 3
   end
-  puts "successor_list"
-  node.successor_list.each_with_index do |node, i|
-    puts "#{"%02d" % i} : #{node}"
-  end
-  puts
-  sleep 10
+rescue Interrupt
+  puts "closing connection.."
 end

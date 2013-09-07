@@ -19,6 +19,8 @@ module DRChord
       @finger = []
       @successor_list = []
       @predecessor = nil
+
+      @active = false
     end
 
     def successor
@@ -46,6 +48,8 @@ module DRChord
         init_finger_table(n)
         update_others()
       end
+
+      @active = true
 
       @successor_list = []
       @successor_list << @finger[0]
@@ -129,11 +133,28 @@ module DRChord
     end
 
     def stabilize
+      # 現在の successor が生きているか調べる
+      if self.successor != nil && alive?(self.successor[:uri]) == false
+        @successor_list.delete_at(0)
+        if @successor_list.count == 0
+        else
+          self.successor = @successor_list.first
+          stabilize
+          return
+        end
+      end
+
+      # successor の predecessor を取得
       x = DRbObject::new_with_uri(self.successor[:uri]).predecessor
-      if between(x[:id], self.id, self.successor[:id])
-        self.successor = x
+      if x != nil && alive?(x[:uri])
+        if between(x[:id], self.id, self.successor[:id])
+          self.successor = x
+        end
       end
       DRbObject::new_with_uri(self.successor[:uri]).notify(self.info)
+
+      # successor_list の更新
+      fix_successor_list
     end
 
     def fix_fingers
@@ -147,7 +168,26 @@ module DRChord
       @successor_list = list[0..SLIST_SIZE-1]
     end
 
+    def fix_predecessor
+      if @predecessor != nil && alive?(@predecessor[:uri]) == false
+        @predecessor = nil
+      end
+    end
+
+    def active?
+      return @active
+    end
+
     private
+    def alive?(uri)
+      begin
+        node = DRbObject::new_with_uri(uri)
+        return node.active?
+      rescue DRb::DRbConnError
+        return false
+      end
+    end
+
     def finger_start(k)
       return (self.id + 2**k) % 2**M
     end
