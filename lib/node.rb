@@ -140,6 +140,8 @@ module DRChord
     end
 
     def stabilize
+      return if active? == false
+
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor[:uri]) == false
         changed
@@ -147,6 +149,17 @@ module DRChord
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
+          (M-1).downto(0) do |i|
+            if alive?(@finger[i][:uri]) == true
+              self.successor = @finger[i]
+              stabilize
+              return
+            end
+          end
+
+          # There is nothing we can do, its over.
+          @active = false
+          return
         else
           self.successor = @successor_list.first
           stabilize
