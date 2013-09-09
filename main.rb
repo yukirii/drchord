@@ -35,7 +35,13 @@ require File.expand_path(File.join(drchord_dir, '/lib/shell.rb'))
 
 node = DRChord::Node.new(options)
 
-DRb.start_service("druby://#{options[:ip]}:#{options[:port]}", node, :safe_level => 1)
+begin
+  uri = "druby://#{options[:ip]}:#{options[:port]}"
+  DRb.start_service(uri, node, :safe_level => 1)
+rescue Errno::EADDRINUSE
+  puts "Error: Address and port already in use. - #{uri}"
+  exit
+end
 puts "dRuby server start - #{DRb.uri}"
 
 node.add_observer(DRChord::Shell.new)

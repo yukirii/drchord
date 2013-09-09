@@ -110,8 +110,6 @@ module DRChord
     end
 
     def find_successor(id)
-      fix_successor
-
       if betweenE(id, self.id, self.successor[:id])
         return self.successor
       else
@@ -145,10 +143,9 @@ module DRChord
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor[:uri]) == false
         changed
-        notify_observers("successor is down")
+        notify_observers("Stabilize: successor is down")
 
         @successor_list.delete_at(0)
-
         if @successor_list.count == 0
         else
           self.successor = @successor_list.first
@@ -158,13 +155,14 @@ module DRChord
       end
 
       # successor の predecessor を取得
-      x = DRbObject::new_with_uri(self.successor[:uri]).predecessor
+      succ_node = DRbObject::new_with_uri(self.successor[:uri])
+      x = succ_node.predecessor
       if x != nil && alive?(x[:uri])
         if between(x[:id], self.id, self.successor[:id])
           self.successor = x
         end
       end
-      DRbObject::new_with_uri(self.successor[:uri]).notify(self.info)
+      succ_node.notify(self.info)
 
       # successor_list の更新
       fix_successor_list
@@ -173,21 +171,6 @@ module DRChord
     def fix_fingers
       i = rand(M)
       @finger[i] = find_successor(finger_start(i))
-    end
-
-    def fix_successor
-      if self.successor != nil && alive?(self.successor[:uri]) == false
-        changed
-        notify_observers("successor is down")
-
-        @successor_list.delete_at(0)
-        if @successor_list.count == 0
-        else
-          @successor_list.each do |node|
-            self.successor = node if alive?(node[:uri])
-          end
-        end
-      end
     end
 
     def fix_successor_list
