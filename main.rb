@@ -59,7 +59,9 @@ end
 
 begin
   loop do
+    # periodically execute methods
     node.stabilize
+    node.fix_successor_list
     node.fix_fingers
     node.fix_predecessor
 

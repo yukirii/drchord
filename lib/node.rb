@@ -54,8 +54,6 @@ module DRChord
         update_others()
       end
 
-      @active = true
-
       @successor_list = []
       @successor_list << @finger[0]
       while @successor_list.count <= SLIST_SIZE
@@ -66,6 +64,8 @@ module DRChord
           @successor_list << last_node.successor
         end
       end
+
+      @active = true
     end
 
     def init_finger_table(n)
@@ -94,7 +94,7 @@ module DRChord
     end
 
     def update_finger_table(s, i)
-      if Ebetween(s[:id], self.id, @finger[i][:id]) && self.id != s[:id]
+      if self.id != s[:id] && Ebetween(s[:id], self.id, @finger[i][:id])
         @finger[i] = s
         pred_node = DRbObject::new_with_uri(@predecessor[:uri])
         pred_node.update_finger_table(s, i)
@@ -176,9 +176,6 @@ module DRChord
         end
       end
       succ_node.notify(self.info)
-
-      # successor_list の更新
-      fix_successor_list
     end
 
     def fix_fingers
