@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
+require 'observer'
 require 'zlib'
 require 'drb/drb'
 
@@ -8,6 +9,8 @@ module DRChord
   class Node
     M = 32
     SLIST_SIZE = 3
+
+    include Observable
 
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
     def initialize(options)
@@ -29,6 +32,8 @@ module DRChord
 
     def successor=(node)
       @finger[0] = node
+      changed
+      notify_observers("successor changed to #{@finger[0]}")
     end
 
     def info
@@ -45,6 +50,7 @@ module DRChord
         @predecessor = self.info
         (M-1).times { @finger << self.info }
       else
+        p alive?("druby://#{n}")
         init_finger_table(n)
         update_others()
       end
@@ -98,11 +104,14 @@ module DRChord
 
     def notify(n)
       if @predecessor == nil || between(n[:id], @predecessor[:id], self.id)
+        changed
+        notify_observers("predecessor changed to #{n}")
         @predecessor = n
       end
     end
 
     def find_successor(id)
+      puts "find_successor  self.successor:#{self.successor[:uri]}  alive?:#{alive?(self.successor[:uri])}"
       if betweenE(id, self.id, self.successor[:id])
         return self.successor
       else
@@ -135,7 +144,14 @@ module DRChord
     def stabilize
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor[:uri]) == false
-        @successor_list.delete_at(0)
+        changed
+        notify_observers("successor is down")
+
+        #@successor_list.delete_at(0)
+        s = self.successor
+        @finger.delete(s)
+        @successor_list.delete(s)
+
         if @successor_list.count == 0
         else
           self.successor = @successor_list.first
@@ -171,6 +187,8 @@ module DRChord
     def fix_predecessor
       if @predecessor != nil && alive?(@predecessor[:uri]) == false
         @predecessor = nil
+        changed
+        notify_observers("predecessor changed to nil")
       end
     end
 

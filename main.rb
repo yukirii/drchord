@@ -11,8 +11,6 @@ rescue LoadError
 end
 
 require 'optparse'
-require './lib/node.rb'
-
 options = {:ip => '127.0.0.1', :port => 3000}
 OptionParser.new do |opt|
   opt.on('-i --ip', 'ip address') {|v| options[:ip] = v }
@@ -32,15 +30,24 @@ OptionParser.new do |opt|
   end
 end
 
-options
+require File.expand_path(File.join(drchord_dir, '/lib/node.rb'))
+require File.expand_path(File.join(drchord_dir, '/lib/shell.rb'))
+
 node = DRChord::Node.new(options)
 DRb.start_service("druby://#{options[:ip]}:#{options[:port]}", node, :safe_level => 1)
-puts "Node: druby server start - #{DRb.uri}"
+puts "dRuby server start - #{DRb.uri}"
 
-if options[:existing_node].nil?
-  node.join
-else
-  node.join(options[:existing_node])
+node.add_observer(DRChord::Shell.new)
+node.join(options[:existing_node])
+
+print "Press the enter key to print node info...\n"
+Thread.new do
+  loop do
+    if gets == "\n"
+      DRChord::Shell.print_node_info(node)
+      print "Press the enter key to print node info...\n"
+    end
+  end
 end
 
 begin
@@ -49,20 +56,7 @@ begin
     node.fix_fingers
     node.fix_predecessor
 
-    puts "succ. #{node.successor}"
-    puts "pred. #{node.predecessor}"
-
-    puts "finger_table"
-    node.finger.each_with_index do |node, i|
-      puts "#{"%02d" % i} : #{node}"
-    end
-
-    puts "successor_list"
-    node.successor_list.each_with_index do |node, i|
-      puts "#{"%02d" % i} : #{node}"
-    end
-    puts
-    sleep 3
+    sleep 5
   end
 rescue Interrupt
   puts "closing connection.."
