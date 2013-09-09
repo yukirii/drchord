@@ -50,7 +50,6 @@ module DRChord
         @predecessor = self.info
         (M-1).times { @finger << self.info }
       else
-        p alive?("druby://#{n}")
         init_finger_table(n)
         update_others()
       end
@@ -111,7 +110,8 @@ module DRChord
     end
 
     def find_successor(id)
-      puts "find_successor  self.successor:#{self.successor[:uri]}  alive?:#{alive?(self.successor[:uri])}"
+      fix_successor
+
       if betweenE(id, self.id, self.successor[:id])
         return self.successor
       else
@@ -135,7 +135,7 @@ module DRChord
     def closest_preceding_finger(id)
       (M-1).downto(0) do |i|
         if between(@finger[i][:id], self.id, id)
-          return @finger[i]
+          return @finger[i] if alive?(@finger[i][:uri])
         end
       end
       return self.info
@@ -147,10 +147,7 @@ module DRChord
         changed
         notify_observers("successor is down")
 
-        #@successor_list.delete_at(0)
-        s = self.successor
-        @finger.delete(s)
-        @successor_list.delete(s)
+        @successor_list.delete_at(0)
 
         if @successor_list.count == 0
         else
@@ -176,6 +173,21 @@ module DRChord
     def fix_fingers
       i = rand(M)
       @finger[i] = find_successor(finger_start(i))
+    end
+
+    def fix_successor
+      if self.successor != nil && alive?(self.successor[:uri]) == false
+        changed
+        notify_observers("successor is down")
+
+        @successor_list.delete_at(0)
+        if @successor_list.count == 0
+        else
+          @successor_list.each do |node|
+            self.successor = node if alive?(node[:uri])
+          end
+        end
+      end
     end
 
     def fix_successor_list

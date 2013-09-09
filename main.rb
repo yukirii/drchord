@@ -34,6 +34,7 @@ require File.expand_path(File.join(drchord_dir, '/lib/node.rb'))
 require File.expand_path(File.join(drchord_dir, '/lib/shell.rb'))
 
 node = DRChord::Node.new(options)
+
 DRb.start_service("druby://#{options[:ip]}:#{options[:port]}", node, :safe_level => 1)
 puts "dRuby server start - #{DRb.uri}"
 
