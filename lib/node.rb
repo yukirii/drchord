@@ -14,8 +14,6 @@ module DRChord
 
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
     def initialize(options)
-      options = default_options.merge(options)
-
       @ip = options[:ip]
       @port = options[:port]
 
@@ -250,10 +248,6 @@ module DRChord
 
     def betweenE(value, initv, endv)
       return value == endv ? true : between(value, initv, endv)
-    end
-
-    def default_options
-      return {:ip => '127.0.0.1', :port => 3000}
     end
   end
 end
