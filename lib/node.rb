@@ -69,18 +69,36 @@ module DRChord
     end
 
     def init_finger_table(n)
-      node = DRbObject::new_with_uri("druby://#{n}")
-      self.successor = node.find_successor(finger_start(0))
+      begin
+        node = DRbObject::new_with_uri("druby://#{n}")
+        self.successor = node.find_successor(finger_start(0))
+      rescue DRb::DRbConnError => ex
+        puts "Error: Connection failed - #{node.__drburi}"
+        puts ex.message
+        exit
+      end
 
-      succ_node = DRbObject::new_with_uri(self.successor[:uri])
-      @predecessor = succ_node.predecessor
-      succ_node.notify(self.info)
+      begin
+        succ_node = DRbObject::new_with_uri(self.successor[:uri])
+        @predecessor = succ_node.predecessor
+        succ_node.notify(self.info)
+      rescue DRb::DRbConnError => ex
+        puts "Error: Connection failed - #{succ_node.__drburi}"
+        puts ex.message
+        exit
+      end
 
       0.upto(M-2) do |i|
         if Ebetween(finger_start(i+1), self.id,  @finger[i][:id])
           @finger[i+1] = @finger[i]
         else
-          @finger[i+1] = node.find_successor(finger_start(i+1))
+          begin
+            @finger[i+1] = node.find_successor(finger_start(i+1))
+          rescue DRb::DRbConnError => ex
+            puts "Error: Connection failed - #{node.__drburi}"
+            puts ex.message
+            exit
+          end
         end
       end
     end
