@@ -54,12 +54,13 @@ end
 
 begin
   loop do
-    # periodically execute methods
-    node.stabilize
-    node.fix_successor_list
-    node.fix_fingers
-    node.fix_predecessor
-
+    if node.active? == true
+      # periodically execute methods
+      node.stabilize
+      node.fix_fingers
+      node.fix_successor_list
+      node.fix_predecessor
+    end
     sleep 5
   end
 rescue Interrupt
