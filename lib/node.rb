@@ -13,6 +13,7 @@ module DRChord
     include Observable
 
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
+    attr_writer :active
     def initialize(options)
       @ip = options[:ip]
       @port = options[:port]
@@ -45,7 +46,7 @@ module DRChord
     def join(existing_node=nil)
       if existing_node.nil?
         self.successor = self.info
-        @predecessor = self.info
+        @predecessor = nil
         (M-1).times { @finger << self.info }
       else
         init_finger_table(existing_node)
@@ -54,7 +55,7 @@ module DRChord
 
       @successor_list = []
       @successor_list << @finger[0]
-      while @successor_list.count <= SLIST_SIZE
+      while @successor_list.count < SLIST_SIZE
         if existing_node.nil?
           @successor_list << self.info
         else
