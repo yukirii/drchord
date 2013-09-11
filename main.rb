@@ -16,7 +16,7 @@ OptionParser.new do |opt|
   opt.banner = "Usage: ruby #{File.basename($0)} [options]"
   opt.on('-i --ip', 'ip address') {|v| options[:ip] = v }
   opt.on('-p --port', 'port') {|v| options[:port] = v.to_i }
-  opt.on('-e --existing_node', 'existing node IP_ADDR:PORT') {|v| options[:existing_node] = "druby://#{v}" }
+  opt.on('-e --bootstrap_node', 'bootstrap node (existing node)  IP_ADDR:PORT') {|v| options[:bootstrap_node] = "druby://#{v}" }
   opt.on_tail('-h', '--help', 'show this message') {|v| puts opt; exit }
   begin
     opt.parse!
@@ -40,7 +40,7 @@ end
 puts "dRuby server start - #{DRb.uri}"
 
 node.add_observer(DRChord::Shell.new)
-node.join(options[:existing_node])
+node.join(options[:bootstrap_node])
 
 print "Press the enter key to print node info...\n"
 Thread.new do

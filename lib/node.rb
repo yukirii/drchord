@@ -43,20 +43,20 @@ module DRChord
       return Zlib.crc32("#{@ip}:#{@port}")
     end
 
-    def join(existing_node=nil)
-      if existing_node.nil?
+    def join(bootstrap_node=nil)
+      if bootstrap_node.nil?
         self.successor = self.info
         @predecessor = nil
         (M-1).times { @finger << self.info }
       else
-        init_finger_table(existing_node)
+        init_finger_table(bootstrap_node)
         update_others()
       end
 
       @successor_list = []
       @successor_list << @finger[0]
       while @successor_list.count < SLIST_SIZE
-        if existing_node.nil?
+        if bootstrap_node.nil?
           @successor_list << self.info
         else
           last_node = DRbObject::new_with_uri(@successor_list.last[:uri])
@@ -67,9 +67,9 @@ module DRChord
       @active = true
     end
 
-    def init_finger_table(existing_node)
+    def init_finger_table(bootstrap_node)
       begin
-        node = DRbObject::new_with_uri(existing_node)
+        node = DRbObject::new_with_uri(bootstrap_node)
         self.successor = node.find_successor(finger_start(0))
       rescue DRb::DRbConnError => ex
         puts "Error: Connection failed - #{node.__drburi}"
