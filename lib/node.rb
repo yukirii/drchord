@@ -1,21 +1,20 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'observer'
 require 'zlib'
 require 'drb/drb'
+require 'logger'
 
 module DRChord
   class Node
     M = 32
     SLIST_SIZE = 3
 
-    include Observable
-
-    attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    def initialize(options)
+    def initialize(options, logger = nil)
       @ip = options[:ip]
       @port = options[:port]
+
+      @logger = logger || Logger.new(STDERR)
 
       @finger = []
       @successor_list = []
@@ -23,6 +22,8 @@ module DRChord
 
       @active = false
     end
+    attr_accessor :ip, :port, :finger, :successor_list, :predecessor
+    attr_reader :logger
 
     def successor
       return @finger[0]
@@ -30,8 +31,7 @@ module DRChord
 
     def successor=(node)
       @finger[0] = node
-      changed
-      notify_observers("set successor = #{@finger[0]}")
+      logger.info "set successor = #{@finger[0]}"
     end
 
     def info
@@ -42,7 +42,7 @@ module DRChord
       return Zlib.crc32("#{@ip}:#{@port}")
     end
 
-    def join(bootstrap_node=nil)
+    def join(bootstrap_node = nil)
       if bootstrap_node.nil?
         @predecessor = nil
         self.successor = self.info
@@ -53,8 +53,8 @@ module DRChord
           node = DRbObject::new_with_uri(bootstrap_node)
           self.successor = node.find_successor(self.id)
         rescue DRb::DRbConnError => ex
-          puts "Error: Connection failed - #{node.__drburi}"
-          puts ex.message
+          logger.error "Error: Connection failed - #{node.__drburi}"
+          logger.error ex.message
           exit
         end
         build_finger_table(bootstrap_node)
@@ -83,8 +83,8 @@ module DRChord
           begin
             @finger[i+1] = node.find_successor(finger_start(i+1))
           rescue DRb::DRbConnError => ex
-            puts "Error: Connection failed - #{node.__drburi}"
-            puts ex.message
+            logger.error "Error: Connection failed - #{node.__drburi}"
+            logger.error ex.message
             exit
           end
         end
@@ -109,9 +109,8 @@ module DRChord
 
     def notify(n)
       if @predecessor == nil || between(n[:id], @predecessor[:id], self.id)
-        changed
-        notify_observers("set predecessor = #{n}")
         @predecessor = n
+        logger.info "set predecessor = #{n}"
       end
     end
 
@@ -150,8 +149,7 @@ module DRChord
 
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor[:uri]) == false
-        changed
-        notify_observers("Stabilize: Successor node failure has occurred.")
+        logger.info "Stabilize: Successor node failure has occurred."
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
@@ -198,8 +196,7 @@ module DRChord
     def fix_predecessor
       if @predecessor != nil && alive?(@predecessor[:uri]) == false
         @predecessor = nil
-        changed
-        notify_observers("fix_predecessor: Predecessor node failure has occurred.  set predecessor = nil")
+        logger.info "fix_predecessor: Predecessor node failure has occurred.  set predecessor = nil"
       end
     end
 

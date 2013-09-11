@@ -26,27 +26,27 @@ OptionParser.new do |opt|
 end
 
 require File.expand_path(File.join(drchord_dir, '/lib/node.rb'))
-require File.expand_path(File.join(drchord_dir, '/lib/shell.rb'))
+require File.expand_path(File.join(drchord_dir, '/lib/util.rb'))
+require 'logger'
 
-node = DRChord::Node.new(options)
+logger = Logger.new(STDERR)
+node = DRChord::Node.new(options, logger)
 
 begin
   uri = "druby://#{options[:ip]}:#{options[:port]}"
   DRb.start_service(uri, node, :safe_level => 1)
 rescue Errno::EADDRINUSE
-  puts "Error: Address and port already in use. - #{uri}"
-  exit
+  logger.error "Error: Address and port already in use. - #{uri}"; exit
 end
-puts "dRuby server start - #{DRb.uri}"
+logger.info "dRuby server start - #{DRb.uri}"
 
-node.add_observer(DRChord::Shell.new)
 node.join(options[:bootstrap_node])
 
 print "Press the enter key to print node info...\n"
 Thread.new do
   loop do
     if gets == "\n"
-      DRChord::Shell.print_node_info(node)
+      DRChord::Util.print_node_info(node)
       print "Press the enter key to print node info...\n"
     end
   end
@@ -64,5 +64,5 @@ begin
     sleep 5
   end
 rescue Interrupt
-  puts "closing connection.."
+  logger.info "closing connection.."
 end

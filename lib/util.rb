@@ -1,14 +1,8 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'colored'
-
 module DRChord
-  class Shell
-    def update(msg)
-      puts msg.yellow
-    end
-
+  class Util
     def self.print_node_info(node)
       puts "succ. #{node.successor}"
       puts "pred. #{node.predecessor}"
