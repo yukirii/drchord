@@ -13,7 +13,6 @@ module DRChord
     include Observable
 
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    attr_writer :active
     def initialize(options)
       @ip = options[:ip]
       @port = options[:port]
@@ -32,7 +31,7 @@ module DRChord
     def successor=(node)
       @finger[0] = node
       changed
-      notify_observers("successor changed to #{@finger[0]}")
+      notify_observers("set successor = #{@finger[0]}")
     end
 
     def info
@@ -45,12 +44,20 @@ module DRChord
 
     def join(bootstrap_node=nil)
       if bootstrap_node.nil?
-        self.successor = self.info
         @predecessor = nil
+        self.successor = self.info
         (M-1).times { @finger << self.info }
       else
-        init_finger_table(bootstrap_node)
-        update_others()
+        @predecessor = nil
+        begin
+          node = DRbObject::new_with_uri(bootstrap_node)
+          self.successor = node.find_successor(self.id)
+        rescue DRb::DRbConnError => ex
+          puts "Error: Connection failed - #{node.__drburi}"
+          puts ex.message
+          exit
+        end
+        build_finger_table(bootstrap_node)
       end
 
       @successor_list = []
@@ -67,26 +74,8 @@ module DRChord
       @active = true
     end
 
-    def init_finger_table(bootstrap_node)
-      begin
-        node = DRbObject::new_with_uri(bootstrap_node)
-        self.successor = node.find_successor(finger_start(0))
-      rescue DRb::DRbConnError => ex
-        puts "Error: Connection failed - #{node.__drburi}"
-        puts ex.message
-        exit
-      end
-
-      begin
-        succ_node = DRbObject::new_with_uri(self.successor[:uri])
-        @predecessor = succ_node.predecessor
-        succ_node.notify(self.info)
-      rescue DRb::DRbConnError => ex
-        puts "Error: Connection failed - #{succ_node.__drburi}"
-        puts ex.message
-        exit
-      end
-
+    def build_finger_table(bootstrap_node)
+      node = DRbObject::new_with_uri(bootstrap_node)
       0.upto(M-2) do |i|
         if Ebetween(finger_start(i+1), self.id,  @finger[i][:id])
           @finger[i+1] = @finger[i]
@@ -121,7 +110,7 @@ module DRChord
     def notify(n)
       if @predecessor == nil || between(n[:id], @predecessor[:id], self.id)
         changed
-        notify_observers("predecessor changed to #{n}")
+        notify_observers("set predecessor = #{n}")
         @predecessor = n
       end
     end
@@ -162,7 +151,7 @@ module DRChord
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor[:uri]) == false
         changed
-        notify_observers("Stabilize: successor is down")
+        notify_observers("Stabilize: Successor node failure has occurred.")
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
@@ -210,7 +199,7 @@ module DRChord
       if @predecessor != nil && alive?(@predecessor[:uri]) == false
         @predecessor = nil
         changed
-        notify_observers("predecessor changed to nil")
+        notify_observers("fix_predecessor: Predecessor node failure has occurred.  set predecessor = nil")
       end
     end
 
