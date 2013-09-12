@@ -214,6 +214,7 @@ module DRChord
       id = Zlib.crc32(key)
       succ = find_successor(id)
       if succ == self.info
+        logger.info "#{self.info[:uri]}: get key:#{key}"
         return @hash.fetch(id, nil)
       else
         return DRbObject::new_with_uri(succ[:uri]).get(key)
@@ -227,6 +228,7 @@ module DRChord
       succ = find_successor(id)
       if succ == self.info
         @hash.store(id, value)
+        logger.info "#{self.info[:uri]}: put key:#{key} value:#{value}"
         return true
       else
         DRbObject::new_with_uri(succ[:uri]).put(key, value)
@@ -239,6 +241,7 @@ module DRChord
       id = Zlib.crc32(key)
       succ = find_successor(id)
       if succ == self.info
+        logger.info "#{self.info[:uri]}: delete key:#{key}"
         return @hash.delete(id)
       else
         DRbObject::new_with_uri(succ[:uri]).delete(key)
