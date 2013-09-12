@@ -41,18 +41,29 @@ begin
     when "status"
       DRChord::Util.print_node_info(node)
     when "get"
-      # node.get(args[0])
+      value = node.get(args[0])
+      if value == nil || value == false
+        puts "Error: Key not found. (#{args[0]})"
+      else
+        puts "Value: #{value}"
+      end
     when "put"
-      # node.get(args[0], args[1])
+      ret = node.put(args[0], args[1])
+      puts ret
     when "delete", "remove"
-      # node.delete(args[0])
+      ret = node.delete(args[0])
+      if ret != nil
+        puts "Value #{ret} deleted."
+      else
+        puts "Error: Key not found. (#{args[0]})"
+      end
     when "help", "?"
       puts "Command list"
     when "exit"
       puts "Closing connection..."
       exit
     else
-      puts "Error: No such command - #{cmd}" if cmd.length > 0
+      puts "Error: No such command - #{cmd}" if cmd.nil? == false && cmd.length > 0
     end
   end
 rescue DRb::DRbConnError

@@ -20,10 +20,16 @@ module DRChord
       @successor_list = []
       @predecessor = nil
 
+      @hash = {}
+
       @active = false
     end
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    attr_reader :logger
+    attr_reader :logger, :hash
+
+    def active?
+      return @active
+    end
 
     def successor
       return @finger[0]
@@ -200,8 +206,41 @@ module DRChord
       end
     end
 
-    def active?
-      return @active
+    def get(key)
+      return false if key == nil
+
+      id = Zlib.crc32(key)
+      succ = find_successor(id)
+      if succ == self.info
+        return @hash.fetch(id, nil)
+      else
+        return DRbObject::new_with_uri(succ[:uri]).get(key)
+      end
+    end
+
+    def put(key, value)
+      return false if key == nil
+
+      id = Zlib.crc32(key)
+      succ = find_successor(id)
+      if succ == self.info
+        @hash.store(id, value)
+        return true
+      else
+        DRbObject::new_with_uri(succ[:uri]).put(key, value)
+      end
+    end
+
+    def delete(key)
+      return false if key == nil
+
+      id = Zlib.crc32(key)
+      succ = find_successor(id)
+      if succ == self.info
+        return @hash.delete(id)
+      else
+        DRbObject::new_with_uri(succ[:uri]).delete(key)
+      end
     end
 
     private

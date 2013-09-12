@@ -16,6 +16,9 @@ module DRChord
       node.successor_list.each_with_index do |node, i|
         puts "#{"%02d" % i} : #{node}"
       end
+
+      puts "key&value:"
+      puts node.hash
     end
   end
 end
