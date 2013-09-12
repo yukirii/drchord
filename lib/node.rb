@@ -22,6 +22,7 @@ module DRChord
 
       @hash = {}
 
+      @next = 0
       @active = false
     end
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
@@ -189,8 +190,9 @@ module DRChord
     end
 
     def fix_fingers
-      i = rand(M)
-      @finger[i] = find_successor(finger_start(i))
+      @next += 1
+      @next = 0 if @next >= M
+      @finger[@next] = find_successor(finger_start(@next))
     end
 
     def fix_successor_list
