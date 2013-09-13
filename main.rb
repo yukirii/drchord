@@ -65,4 +65,5 @@ begin
   end
 rescue Interrupt
   logger.info "closing connection.."
+  node.leave
 end

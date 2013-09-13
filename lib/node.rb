@@ -208,6 +208,29 @@ module DRChord
       end
     end
 
+
+    def notify_predecessor_leaving(node, new_pred, pred_hash)
+      if node == @predecessor
+        @predecessor = new_pred
+        @hash.merge!(pred_hash)
+      end
+    end
+
+    def notify_successor_leaving(node, successors)
+      if node == self.successor
+        @successor_list.delete_at(0)
+        @successor_list << successors.last
+        self.successor = @successor_list.first
+      end
+    end
+
+    def leave
+      logger.info "Node #{self.info[:uri]} leaving..."
+      DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash)
+      DRbObject::new_with_uri(@predecessor[:uri]).notify_successor_leaving(self.info, @successor_list)
+      @active = false
+    end
+
     def get(key)
       return false if key == nil
 
