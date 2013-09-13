@@ -17,8 +17,8 @@ module DRChord
         puts "#{"%02d" % i} : #{node}"
       end
 
-      puts "key&value:"
-      puts node.hash
+      puts "key & value:"
+      puts node.hash_table
     end
   end
 end

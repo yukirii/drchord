@@ -20,13 +20,13 @@ module DRChord
       @successor_list = []
       @predecessor = nil
 
-      @hash = {}
+      @hash_table = {}
 
       @next = 0
       @active = false
     end
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    attr_reader :logger, :hash
+    attr_reader :logger, :hash_table
 
     def active?
       return @active
@@ -212,7 +212,7 @@ module DRChord
     def notify_predecessor_leaving(node, new_pred, pred_hash)
       if node == @predecessor
         @predecessor = new_pred
-        @hash.merge!(pred_hash)
+        @hash_table.merge!(pred_hash)
       end
     end
 
@@ -226,7 +226,7 @@ module DRChord
 
     def leave
       logger.info "Node #{self.info[:uri]} leaving..."
-      DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash)
+      DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash_table)
       DRbObject::new_with_uri(@predecessor[:uri]).notify_successor_leaving(self.info, @successor_list)
       @active = false
     end
@@ -238,7 +238,7 @@ module DRChord
       succ = find_successor(id)
       if succ == self.info
         logger.info "#{self.info[:uri]}: get key:#{key}"
-        return @hash.fetch(id, nil)
+        return @hash_table.fetch(id, nil)
       else
         return DRbObject::new_with_uri(succ[:uri]).get(key)
       end
@@ -250,7 +250,7 @@ module DRChord
       id = Zlib.crc32(key)
       succ = find_successor(id)
       if succ == self.info
-        @hash.store(id, value)
+        @hash_table.store(id, value)
         logger.info "#{self.info[:uri]}: put key:#{key} value:#{value}"
         return true
       else
@@ -265,7 +265,7 @@ module DRChord
       succ = find_successor(id)
       if succ == self.info
         logger.info "#{self.info[:uri]}: delete key:#{key}"
-        return @hash.delete(id)
+        return @hash_table.delete(id)
       else
         DRbObject::new_with_uri(succ[:uri]).delete(key)
       end

@@ -27,6 +27,17 @@ require File.expand_path(File.join(drchord_dir, '/lib/util.rb'))
 require 'drb/drb'
 
 node = DRbObject::new_with_uri(options[:node])
+Thread.new do
+  begin
+    loop do
+      node.active?
+      sleep 5
+    end
+  rescue DRb::DRbConnError
+    puts "Error: Connection failed - #{node.__drburi}"; exit
+  end
+end
+
 begin
   puts "#{options[:node]} is active? ... #{node.active?}"
   exit unless node.active?
