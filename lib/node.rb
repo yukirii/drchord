@@ -49,6 +49,17 @@ module DRChord
       return Zlib.crc32("#{@ip}:#{@port}")
     end
 
+    def key_transfer(node)
+      keys = {}
+      @hash_table.each do |key, value|
+        if betweenE(key, @predecessor[:id], node[:id])
+          keys.store(key, value)
+          @hash_table.delete(key)
+        end
+      end
+      return keys
+    end
+
     def join(bootstrap_node = nil)
       if bootstrap_node.nil?
         @predecessor = nil
@@ -65,6 +76,8 @@ module DRChord
           exit
         end
         build_finger_table(bootstrap_node)
+        succ = DRbObject::new_with_uri(self.successor[:uri])
+        @hash_table.merge!(succ.key_transfer(self.info))
       end
 
       @successor_list = []
