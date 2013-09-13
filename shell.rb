@@ -68,11 +68,19 @@ begin
       else
         puts "Error: Key not found. (#{args[0]})"
       end
-    when "help", "?"
-      puts "Command list"
     when "exit"
       puts "Closing connection..."
       exit
+    when "help", "h", "?"
+      puts <<"EOS"
+Command list:
+  status
+  put
+  get
+  delete
+  help
+  exit
+EOS
     else
       puts "Error: No such command - #{cmd}" if cmd.nil? == false && cmd.length > 0
     end
