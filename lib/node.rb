@@ -27,7 +27,7 @@ module DRChord
       @active = false
     end
     attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    attr_reader :logger, :hash_table
+    attr_reader :logger, :hash_table, :replicas
 
     def active?
       return @active
@@ -226,7 +226,6 @@ module DRChord
       end
     end
 
-
     def notify_predecessor_leaving(node, new_pred, pred_hash)
       if node == @predecessor
         @predecessor = new_pred
@@ -281,10 +280,17 @@ module DRChord
       if succ == self.info
         @hash_table.store(id, value)
         logger.info "#{self.info[:uri]}: put key:#{key} value:#{value}"
+        @successor_list.each do |s|
+          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+        end
         return true
       else
         DRbObject::new_with_uri(succ[:uri]).put(key, value)
       end
+    end
+
+    def insert_replicas(node_id, entries)
+      @replicas.store(node_id, entries)
     end
 
     def delete(key)
@@ -293,10 +299,28 @@ module DRChord
       id = Zlib.crc32(key)
       succ = find_successor(id)
       if succ == self.info
+        @hash_table.delete(id)
+        @successor_list.each do |s|
+          DRbObject::new_with_uri(s[:uri]).delete_replica(self.id, id)
+        end
         logger.info "#{self.info[:uri]}: delete key:#{key}"
-        return @hash_table.delete(id)
+        return true
       else
         DRbObject::new_with_uri(succ[:uri]).delete(key)
+      end
+    end
+
+    def delete_replica(node_id, replica = nil)
+      if replicas.nil?
+        @replicas.reject!{|key, value| key == node_id }
+      else
+        @replicas[node_id].reject!{|key, value| value == replica }
+      end
+    end
+
+    def transfer_replicas
+      @successor_list.each do |s|
+        DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
       end
     end
 

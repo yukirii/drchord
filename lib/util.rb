@@ -19,6 +19,8 @@ module DRChord
 
       puts "key & value:"
       puts node.hash_table
+      puts "replicas:"
+      puts node.replicas
     end
   end
 end
