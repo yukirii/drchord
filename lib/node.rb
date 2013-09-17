@@ -21,6 +21,7 @@ module DRChord
       @predecessor = nil
 
       @hash_table = {}
+      @replicas = {}
 
       @next = 0
       @active = false
@@ -50,14 +51,18 @@ module DRChord
     end
 
     def key_transfer(node)
-      keys = {}
+      entries = {}
+      # 譲渡するエントリを自身のhash_tableから削除
       @hash_table.each do |key, value|
         if betweenE(key, @predecessor[:id], node[:id])
-          keys.store(key, value)
+          entries.store(key, value)
           @hash_table.delete(key)
         end
       end
-      return keys
+      # 譲渡するエントリを自身のreplicaとして登録
+      @replicas.store(node[:id], entries)
+
+      return entries
     end
 
     def join(bootstrap_node = nil)
@@ -251,7 +256,18 @@ module DRChord
       succ = find_successor(id)
       if succ == self.info
         logger.info "#{self.info[:uri]}: get key:#{key}"
-        return @hash_table.fetch(id, nil)
+
+        ret = @hash_table.fetch(id, nil)
+        if ret.nil?
+          # hash_table にない場合 replica 内を探す
+          @replicas.each do |node_id, hash|
+            if id <= node_id
+              ret = hash.fetch(id, nil)
+              break unless ret.nil?
+            end
+          end
+        end
+        return ret
       else
         return DRbObject::new_with_uri(succ[:uri]).get(key)
       end
