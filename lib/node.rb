@@ -70,7 +70,10 @@ module DRChord
 
         # 新しい replica の配置
         @successor_list.each do |s|
-          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+          begin
+            DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+          rescue DRb::ConnError
+          end
         end
       end
     end
@@ -268,8 +271,13 @@ module DRChord
 
     def leave
       logger.info "Node #{self.info[:uri]} leaving..."
-      DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash_table)
-      DRbObject::new_with_uri(@predecessor[:uri]).notify_successor_leaving(self.info, @successor_list)
+      if self.successor != @predecessor
+        begin
+          DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash_table)
+          DRbObject::new_with_uri(@predecessor[:uri]).notify_successor_leaving(self.info, @successor_list) if @predecessor != nil
+        rescue DRb::DRbConnError
+        end
+      end
       @active = false
     end
 
