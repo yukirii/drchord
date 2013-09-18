@@ -285,10 +285,8 @@ module DRChord
         if ret.nil?
           # hash_table にない場合 replica 内を探す
           @replicas.each do |node_id, hash|
-            if id <= node_id
-              ret = hash.fetch(id, nil)
-              break unless ret.nil?
-            end
+            ret = hash.fetch(id, nil)
+            break unless ret.nil?
           end
         end
         return ret
