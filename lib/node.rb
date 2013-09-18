@@ -8,7 +8,7 @@ require 'logger'
 module DRChord
   class Node
     M = 32
-    SLIST_SIZE = 3
+    SLIST_SIZE = 2
 
     def initialize(options, logger = nil)
       @ip = options[:ip]
@@ -26,8 +26,8 @@ module DRChord
       @next = 0
       @active = false
     end
-    attr_accessor :ip, :port, :finger, :successor_list, :predecessor
-    attr_reader :logger, :hash_table, :replicas
+    attr_accessor :ip, :port, :finger, :successor_list
+    attr_reader :logger, :hash_table, :replicas, :predecessor
 
     def active?
       return @active
@@ -42,6 +42,38 @@ module DRChord
       logger.info "set successor = #{@finger[0]}"
     end
 
+    def predecessor=(node)
+      @predecessor = node
+      logger.info "set predecessor = #{node}"
+
+      if node != nil && node != self.info
+        entries = {}
+        # 譲渡するエントリを自身のhash_tableから削除
+        @hash_table.each do |key, value|
+          if betweenE(key, self.id, @predecessor[:id])
+            entries.store(key, value)
+            @hash_table.delete(key)
+          end
+        end
+
+        if node[:id] != self.id
+          @replicas.store(node[:id], entries)
+          DRbObject::new_with_uri(@predecessor[:uri]).insert_entries(entries)
+        end
+
+        # successor_list の最後のノードのreplicaのうち、@predecessorのものを削除
+        if @successor_list.count == SLIST_SIZE
+          last_successor = @successor_list.last
+          DRbObject::new_with_uri(last_successor[:uri]).delete_replica(self.id, @predecessor[:id])
+        end
+
+        # 新しい replica の配置
+        @successor_list.each do |s|
+          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+        end
+      end
+    end
+
     def info
       return {:ip => @ip, :port => @port, :id => id, :uri => "druby://#{@ip}:#{@port}"}
     end
@@ -50,28 +82,17 @@ module DRChord
       return Zlib.crc32("#{@ip}:#{@port}")
     end
 
-    def key_transfer(node)
-      entries = {}
-      # 譲渡するエントリを自身のhash_tableから削除
-      @hash_table.each do |key, value|
-        if betweenE(key, @predecessor[:id], node[:id])
-          entries.store(key, value)
-          @hash_table.delete(key)
-        end
-      end
-      # 譲渡するエントリを自身のreplicaとして登録
-      @replicas.store(node[:id], entries)
-
-      return entries
+    def insert_entries(entries)
+      @hash_table.merge!(entries)
     end
 
     def join(bootstrap_node = nil)
       if bootstrap_node.nil?
-        @predecessor = nil
+        self.predecessor = nil
         self.successor = self.info
         (M-1).times { @finger << self.info }
       else
-        @predecessor = nil
+        self.predecessor = nil
         begin
           node = DRbObject::new_with_uri(bootstrap_node)
           self.successor = node.find_successor(self.id)
@@ -81,8 +102,6 @@ module DRChord
           exit
         end
         build_finger_table(bootstrap_node)
-        succ = DRbObject::new_with_uri(self.successor[:uri])
-        @hash_table.merge!(succ.key_transfer(self.info))
       end
 
       @successor_list = []
@@ -134,8 +153,7 @@ module DRChord
 
     def notify(n)
       if @predecessor == nil || between(n[:id], @predecessor[:id], self.id)
-        @predecessor = n
-        logger.info "set predecessor = #{n}"
+        self.predecessor = n
       end
     end
 
@@ -221,14 +239,13 @@ module DRChord
 
     def fix_predecessor
       if @predecessor != nil && alive?(@predecessor[:uri]) == false
-        @predecessor = nil
-        logger.info "fix_predecessor: Predecessor node failure has occurred.  set predecessor = nil"
+        self.predecessor = nil
       end
     end
 
     def notify_predecessor_leaving(node, new_pred, pred_hash)
       if node == @predecessor
-        @predecessor = new_pred
+        self.predecessor = new_pred
         @hash_table.merge!(pred_hash)
       end
     end
@@ -290,7 +307,16 @@ module DRChord
     end
 
     def insert_replicas(node_id, entries)
-      @replicas.store(node_id, entries)
+      # 自分自身のレプリカは持たない
+      if self.id != node_id
+        # レプリカ保有数が最大数に達している場合、successor_listに存在しないレプリカを削除
+        if @replicas.count >= SLIST_SIZE
+          keys = []
+          @successor_list.each{|s| keys << s[:id] }
+          @replicas.reject!{|key, value| keys.include?(key) == false }
+        end
+        @replicas.store(node_id, entries)
+      end
     end
 
     def delete(key)
@@ -314,13 +340,18 @@ module DRChord
       if replicas.nil?
         @replicas.reject!{|key, value| key == node_id }
       else
-        @replicas[node_id].reject!{|key, value| value == replica }
+        if @replicas[node_id].nil? == false
+          @replicas[node_id].reject!{|key, value| betweenE(key, node_id, replica) }
+        end
       end
     end
 
     def transfer_replicas
       @successor_list.each do |s|
-        DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+        begin
+          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+        rescue DRb::DRbConnError
+        end
       end
     end
 
