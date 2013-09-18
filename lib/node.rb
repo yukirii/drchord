@@ -8,7 +8,7 @@ require 'logger'
 module DRChord
   class Node
     M = 32
-    SLIST_SIZE = 2
+    SLIST_SIZE = 3
 
     def initialize(options, logger = nil)
       @ip = options[:ip]
