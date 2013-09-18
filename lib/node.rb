@@ -39,12 +39,12 @@ module DRChord
 
     def successor=(node)
       @finger[0] = node
-      logger.info "set successor = #{@finger[0]}"
+      logger.info "set successor = #{@finger[0][:uri]}"
     end
 
     def predecessor=(node)
       @predecessor = node
-      logger.info "set predecessor = #{node}"
+      logger.info "set predecessor = #{node.nil? ? "nil" : node[:uri]}"
 
       if node != nil && node != self.info
         entries = {}
@@ -62,7 +62,10 @@ module DRChord
         # successor_list の最後のノードのreplicaのうち、@predecessorのものを削除
         if @successor_list.count == SLIST_SIZE
           last_successor = @successor_list.last
-          DRbObject::new_with_uri(last_successor[:uri]).delete_replica(self.id, @predecessor[:id])
+          begin
+            DRbObject::new_with_uri(last_successor[:uri]).delete_replica(self.id, @predecessor[:id])
+          rescue DRb::DRbConnError
+          end
         end
 
         # 新しい replica の配置
@@ -237,7 +240,12 @@ module DRChord
 
     def fix_predecessor
       if @predecessor != nil && alive?(@predecessor[:uri]) == false
+        old_predecessor = @predecessor
         self.predecessor = nil
+
+        # predecessor のレプリカを自身の hash_table にマージし、レプリカからは削除する
+        @hash_table.merge!(@replicas[old_predecessor[:id]])
+        @replicas.delete(old_predecessor[:id])
       end
     end
 
@@ -341,6 +349,14 @@ module DRChord
     end
 
     def management_replicas
+      # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
+      if @predecessor == self.info && self.successor == @predecessor
+        if @replicas.count > 0
+          @replicas.each{|key, value| @hash_table.merge!(value) }
+          @replicas.clear
+        end
+      end
+
       # successor_list に最新の replica を配置
       @successor_list.each do |s|
         begin
