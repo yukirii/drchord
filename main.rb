@@ -60,7 +60,7 @@ begin
       node.fix_fingers
       node.fix_successor_list
       node.fix_predecessor
-      node.transfer_replicas
+      node.management_replicas
     end
     sleep 5
   end

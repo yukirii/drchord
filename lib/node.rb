@@ -56,10 +56,8 @@ module DRChord
           end
         end
 
-        if node[:id] != self.id
-          @replicas.store(node[:id], entries)
-          DRbObject::new_with_uri(@predecessor[:uri]).insert_entries(entries)
-        end
+        @replicas.store(node[:id], entries)
+        DRbObject::new_with_uri(@predecessor[:uri]).insert_entries(entries)
 
         # successor_list の最後のノードのreplicaのうち、@predecessorのものを削除
         if @successor_list.count == SLIST_SIZE
@@ -245,8 +243,10 @@ module DRChord
 
     def notify_predecessor_leaving(node, new_pred, pred_hash)
       if node == @predecessor
+        old_pred = @predecessor
         self.predecessor = new_pred
         @hash_table.merge!(pred_hash)
+        delete_replica(old_pred[:id])
       end
     end
 
@@ -309,12 +309,6 @@ module DRChord
     def insert_replicas(node_id, entries)
       # 自分自身のレプリカは持たない
       if self.id != node_id
-        # レプリカ保有数が最大数に達している場合、successor_listに存在しないレプリカを削除
-        if @replicas.count >= SLIST_SIZE
-          keys = []
-          @successor_list.each{|s| keys << s[:id] }
-          @replicas.reject!{|key, value| keys.include?(key) == false }
-        end
         @replicas.store(node_id, entries)
       end
     end
@@ -337,7 +331,7 @@ module DRChord
     end
 
     def delete_replica(node_id, replica = nil)
-      if replicas.nil?
+      if replica.nil?
         @replicas.reject!{|key, value| key == node_id }
       else
         if @replicas[node_id].nil? == false
@@ -346,7 +340,8 @@ module DRChord
       end
     end
 
-    def transfer_replicas
+    def management_replicas
+      # successor_list に最新の replica を配置
       @successor_list.each do |s|
         begin
           DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
