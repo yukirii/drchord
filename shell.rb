@@ -23,6 +23,7 @@ OptionParser.new do |opt|
   end
 end
 
+require File.expand_path(File.join(drchord_dir, '/lib/shell/shell.rb'))
 require File.expand_path(File.join(drchord_dir, '/lib/util.rb'))
 require 'drb/drb'
 
