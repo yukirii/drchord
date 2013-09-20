@@ -9,6 +9,7 @@ module DRChord
   class Node
     M = 32
     SLIST_SIZE = 3
+    INTERVAL = 5
 
     def initialize(options, logger = nil)
       @ip = options[:ip]
@@ -369,6 +370,31 @@ module DRChord
           DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
         rescue DRb::DRbConnError
         end
+      end
+    end
+
+    def start(bootstrap_node)
+      logger.info "Ctrl-C to shutdown node"
+
+      join(bootstrap_node)
+
+      begin
+        node_thread = Thread.new do
+          loop do
+            if active? == true
+              stabilize
+              fix_fingers
+              fix_successor_list
+              fix_predecessor
+              management_replicas
+            end
+            sleep INTERVAL
+          end
+        end
+        node_thread.join
+      rescue Interrupt
+        logger.info "going to shutdown..."
+        leave
       end
     end
 
