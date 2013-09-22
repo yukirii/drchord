@@ -334,12 +334,14 @@ module DRChord
       id = Zlib.crc32(key)
       succ = find_successor(id)
       if succ == self.info
-        @hash_table.delete(id)
-        @successor_list.each do |s|
-          DRbObject::new_with_uri(s[:uri]).delete_replica(self.id, id)
+        ret = @hash_table.delete(id)
+        unless ret.nil?
+          @successor_list.each do |s|
+            DRbObject::new_with_uri(s[:uri]).delete_replica(self.id, id)
+          end
+          logger.info "#{self.info[:uri]}: delete key:#{key}"
         end
-        logger.info "#{self.info[:uri]}: delete key:#{key}"
-        return true
+        return ret
       else
         DRbObject::new_with_uri(succ[:uri]).delete(key)
       end

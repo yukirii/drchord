@@ -33,13 +33,13 @@ module DRChord
           case cmd
           when "status"
             Util.print_node_info(@node)
-          when "get"; get(args)
           when "put"; put(args)
+          when "get"; get(args)
           when "delete", "remove"; delete(args)
           when "exit"
             stop
           when "help", "h", "?"
-            puts << "Command list:"
+            puts "Command list:"
             puts "  status"
             puts "  put"
             puts "  delete"
@@ -60,26 +60,30 @@ module DRChord
     end
 
     private
-    def get(args)
-      value = @node.get(args[0])
-      if value == nil || value == false
-        puts "Error: Key not found. (#{args[0]})"
-      else
-        puts "Value: #{value}"
-      end
-    end
-
     def put(args)
       ret = @node.put(args[0], args[1])
       puts ret
     end
 
+    def get(args)
+      args.each do |arg|
+        value = @node.get(arg)
+        if value == nil || value == false
+          puts "Error: Key not found. (#{arg})"
+        else
+          puts "Value: #{value}"
+        end
+      end
+    end
+
     def delete(args)
-      ret = @node.delete(args[0])
-      if ret == nil || ret == false
-        puts "Error: Key not found. (#{args[0]})"
-      else
-        puts "Value #{args[0]} deleted."
+      args.each do |arg|
+        ret = @node.delete(arg)
+        if ret == nil || ret == false
+          puts "Error: Key not found. (#{arg})"
+        else
+          puts "Key & Value deleted. - (#{arg})"
+        end
       end
     end
   end
