@@ -16,7 +16,10 @@ module DRChord
     def run
       Thread.new do
         begin
-          loop{ @node.active?; sleep INTERVAL }
+          loop do
+            @node.active?
+            sleep INTERVAL
+          end
         rescue DRb::DRbConnError
           puts "Error: Connection failed - #{@node.__drburi}"; exit
         end
@@ -25,29 +28,7 @@ module DRChord
       begin
         loop do
           print "\n> "
-
-          input = STDIN.gets.split
-          cmd = input.shift
-          args = input
-
-          case cmd
-          when "status"
-            Util.print_node_info(@node)
-          when "put"; put(args)
-          when "get"; get(args)
-          when "delete", "remove"; delete(args)
-          when "exit"
-            stop
-          when "help", "h", "?"
-            puts "Command list:"
-            puts "  status"
-            puts "  put"
-            puts "  delete"
-            puts "  help"
-            puts "  exit"
-          else
-            puts "Error: No such command - #{cmd}" if cmd.nil? == false && cmd.length > 0
-          end
+          accept_commands
         end
       rescue Interrupt
         stop
@@ -60,6 +41,31 @@ module DRChord
     end
 
     private
+    def accept_commands
+      input = STDIN.gets.split
+      cmd = input.shift
+      args = input
+
+      case cmd
+      when "status"
+        Util.print_node_info(@node)
+      when "put"; put(args)
+      when "get"; get(args)
+      when "delete", "remove"; delete(args)
+      when "exit"
+        stop
+      when "help", "h", "?"
+        puts "Command list:"
+        puts "  status"
+        puts "  put"
+        puts "  delete"
+        puts "  help"
+        puts "  exit"
+      else
+        puts "Error: No such command - #{cmd}" if cmd.nil? == false && cmd.length > 0
+      end
+    end
+
     def put(args)
       ret = @node.put(args[0], args[1])
       puts ret
