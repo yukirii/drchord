@@ -11,10 +11,10 @@ rescue LoadError
 end
 
 require 'optparse'
-options = {:node => "druby://127.0.0.1:3000"}
+options = {:node => "druby://127.0.0.1:3000?node"}
 OptionParser.new do |opt|
   opt.banner = "Usage: ruby #{File.basename($0)} [options]"
-  opt.on('-n --node', 'IP_ADDR:PORT') {|v| options[:node] = "druby://#{v}" }
+  opt.on('-n --node', 'IP_ADDR:PORT') {|v| options[:node] = "druby://#{v}?node" }
   opt.on_tail('-h', '--help', 'show this message') {|v| puts opt; exit }
   begin
     opt.parse!

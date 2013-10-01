@@ -80,7 +80,7 @@ module DRChord
     end
 
     def info
-      return {:ip => @ip, :port => @port, :id => id, :uri => "druby://#{@ip}:#{@port}"}
+      return {:ip => @ip, :port => @port, :id => id, :uri => "druby://#{@ip}:#{@port}?node"}
     end
 
     def id
