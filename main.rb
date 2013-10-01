@@ -33,7 +33,8 @@ logger = Logger.new(STDERR)
 node = DRChord::Node.new(options, logger)
 
 begin
-  DRb.start_service("druby://#{options[:ip]}:#{options[:port]}", node, :safe_level => 1)
+  uri = "druby://#{options[:ip]}:#{options[:port]}"
+  DRb.start_service(uri, node, :safe_level => 1)
   logger.info "dRuby server start - #{DRb.uri}"
 rescue Errno::EADDRINUSE
   logger.error "Error: Address and port already in use. - #{uri}"; exit
