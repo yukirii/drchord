@@ -16,7 +16,7 @@ OptionParser.new do |opt|
   opt.banner = "Usage: ruby #{File.basename($0)} [options]"
   opt.on('-i --ip', 'ip address') {|v| options[:ip] = v }
   opt.on('-p --port', 'port') {|v| options[:port] = v.to_i }
-  opt.on('-e --bootstrap_node', 'bootstrap node (existing node)  IP_ADDR:PORT') {|v| options[:bootstrap_node] = "druby://#{v}?node" }
+  opt.on('-e --bootstrap_node', 'bootstrap node (existing node)  IP_ADDR:PORT') {|v| options[:bootstrap_node] = "druby://#{v}?chord" }
   opt.on_tail('-h', '--help', 'show this message') {|v| puts opt; exit }
   begin
     opt.parse!
@@ -44,9 +44,9 @@ Thread.new do
   puts "Press the enter key to print node info..."
   loop do
     if gets == "\n"
-      DRChord::Util.print_node_info(front.node)
+      DRChord::Util.print_node_info(front.chord)
     end
   end
 end
 
-front.node.start(options[:bootstrap_node])
+front.dhash.start(options[:bootstrap_node])

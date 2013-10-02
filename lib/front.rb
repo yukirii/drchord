@@ -3,18 +3,22 @@
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/node.rb'))
+require  File.expand_path(File.join(drchord_dir, '/dhash.rb'))
 
 module DRChord
   class Front
-    attr_reader :node
+    attr_reader :chord, :dhash
     def initialize(options, logger)
-      @node = DRChord::Node.new(options, logger)
+      @chord = Node.new(options, logger)
+      @dhash = DHash.new(@chord, logger)
     end
 
     def [](args)
       case args
-      when "node"
-        @node
+      when "chord"
+        @chord
+      when "dhash"
+        @dhash
       end
     end
   end
