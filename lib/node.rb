@@ -278,6 +278,7 @@ module DRChord
       @active = false
     end
 
+=begin
     def get(key)
       return false if key == nil
 
@@ -317,13 +318,6 @@ module DRChord
       end
     end
 
-    def insert_replicas(node_id, entries)
-      # 自分自身のレプリカは持たない
-      if self.id != node_id
-        @replicas.store(node_id, entries)
-      end
-    end
-
     def delete(key)
       return false if key == nil
 
@@ -340,6 +334,14 @@ module DRChord
         return ret
       else
         DRbObject::new_with_uri(succ.uri).delete(key)
+      end
+    end
+=end
+
+    def insert_replicas(node_id, entries)
+      # 自分自身のレプリカは持たない
+      if self.id != node_id
+        @replicas.store(node_id, entries)
       end
     end
 
