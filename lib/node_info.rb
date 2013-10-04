@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require "zlib"
+require 'zlib'
 
 module DRChord
-  class NodeInfomation
+  class NodeInformation
     attr_reader :ip, :port
     def initialize(ip, port)
       @ip = ip

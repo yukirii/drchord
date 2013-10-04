@@ -3,6 +3,7 @@
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '../util.rb'))
+require  File.expand_path(File.join(drchord_dir, '../node_info.rb'))
 require 'drb/drb'
 
 module DRChord
@@ -17,11 +18,11 @@ module DRChord
       Thread.new do
         begin
           loop do
-            @node.active?
+            @node.chord.active?
             sleep INTERVAL
           end
         rescue DRb::DRbConnError
-          puts "Error: Connection failed - #{@node.__drburi}"; exit
+          puts "Error: Connection failed - #{@node.chord.__drburi}"; exit
         end
       end
 
@@ -48,7 +49,7 @@ module DRChord
 
       case cmd
       when "status"
-        Util.print_node_info(@node)
+        Util.print_node_info(@node.chord)
       when "put"; put(args)
       when "get"; get(args)
       when "delete", "remove"; delete(args)
@@ -67,13 +68,13 @@ module DRChord
     end
 
     def put(args)
-      ret = @node.put(args[0], args[1])
+      ret = @node.dhash.put(args[0], args[1])
       puts ret
     end
 
     def get(args)
       args.each do |arg|
-        value = @node.get(arg)
+        value = @node.dhash.get(arg)
         if value == nil || value == false
           puts "Error: Key not found. (#{arg})"
         else
@@ -84,7 +85,7 @@ module DRChord
 
     def delete(args)
       args.each do |arg|
-        ret = @node.delete(arg)
+        ret = @node.dhash.delete(arg)
         if ret == nil || ret == false
           puts "Error: Key not found. (#{arg})"
         else

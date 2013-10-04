@@ -3,9 +3,6 @@
 
 require "zlib"
 
-drchord_dir = File.expand_path(File.dirname(__FILE__))
-require  File.expand_path(File.join(drchord_dir, '/node.rb'))
-
 module DRChord
   class DHash
     attr_reader :node
@@ -16,7 +13,7 @@ module DRChord
       @logger = logger || Logger.new(STDERR)
     end
 
-    def start(bootstrap)
+    def start(bootstrap = nil)
       @chord.start(bootstrap)
     end
 

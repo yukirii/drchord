@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
+drchord_dir = File.expand_path(File.dirname(__FILE__))
+require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require 'zlib'
 require 'drb/drb'
 require 'logger'
@@ -12,10 +14,9 @@ module DRChord
     INTERVAL = 5
 
     def initialize(options, logger = nil)
-      @ip = options[:ip]
-      @port = options[:port]
-
       @logger = logger || Logger.new(STDERR)
+
+      @info = NodeInformation.new(options[:ip], options[:port])
 
       @finger = []
       @successor_list = []
@@ -27,8 +28,7 @@ module DRChord
       @next = 0
       @active = false
     end
-    attr_accessor :ip, :port, :finger, :successor_list
-    attr_reader :logger, :hash_table, :replicas, :predecessor
+    attr_reader :logger, :info, :finger, :successor_list, :hash_table, :replicas, :predecessor
 
     def active?
       return @active
@@ -40,31 +40,30 @@ module DRChord
 
     def successor=(node)
       @finger[0] = node
-      logger.info "set successor = #{@finger[0][:uri]}"
+      logger.info "set successor = #{@finger[0].uri}"
     end
 
     def predecessor=(node)
       @predecessor = node
-      logger.info "set predecessor = #{node.nil? ? "nil" : node[:uri]}"
+      logger.info "set predecessor = #{node.nil? ? "nil" : node.uri}"
 
-      if node != nil && node != self.info
+      if node != nil && node != @info
         entries = {}
         # 譲渡するエントリを自身のhash_tableから削除
         @hash_table.each do |key, value|
-          if betweenE(key, self.id, @predecessor[:id])
+          if betweenE(key, self.id, @predecessor.id)
             entries.store(key, value)
             @hash_table.delete(key)
           end
         end
-
-        @replicas.store(node[:id], entries)
-        DRbObject::new_with_uri(@predecessor[:uri]).insert_entries(entries)
+        @replicas.store(node.id, entries)
+        DRbObject::new_with_uri(@predecessor.uri).insert_entries(entries)
 
         # successor_list の最後のノードのreplicaのうち、@predecessorのものを削除
         if @successor_list.count == SLIST_SIZE
           last_successor = @successor_list.last
           begin
-            DRbObject::new_with_uri(last_successor[:uri]).delete_replica(self.id, @predecessor[:id])
+            DRbObject::new_with_uri(last_successor.uri).delete_replica(self.id, @predecessor.id)
           rescue DRb::DRbConnError
           end
         end
@@ -72,19 +71,16 @@ module DRChord
         # 新しい replica の配置
         @successor_list.each do |s|
           begin
-            DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+            DRbObject::new_with_uri(s.uri).insert_replicas(self.id, @hash_table)
           rescue DRb::ConnError
           end
         end
       end
     end
 
-    def info
-      return {:ip => @ip, :port => @port, :id => id, :uri => "druby://#{@ip}:#{@port}?chord"}
-    end
-
     def id
-      return Zlib.crc32("#{@ip}:#{@port}")
+      return @info.id
+      #return Zlib.crc32("#{@ip}:#{@port}")
     end
 
     def insert_entries(entries)
@@ -94,8 +90,8 @@ module DRChord
     def join(bootstrap_node = nil)
       if bootstrap_node.nil?
         self.predecessor = nil
-        self.successor = self.info
-        (M-1).times { @finger << self.info }
+        self.successor = @info
+        (M-1).times { @finger << @info }
       else
         self.predecessor = nil
         begin
@@ -113,9 +109,9 @@ module DRChord
       @successor_list << @finger[0]
       while @successor_list.count < SLIST_SIZE
         if bootstrap_node.nil?
-          @successor_list << self.info
+          @successor_list << @info
         else
-          last_node = DRbObject::new_with_uri(@successor_list.last[:uri])
+          last_node = DRbObject::new_with_uri(@successor_list.last.uri)
           @successor_list << last_node.successor
         end
       end
@@ -126,7 +122,7 @@ module DRChord
     def build_finger_table(bootstrap_node)
       node = DRbObject::new_with_uri(bootstrap_node)
       0.upto(M-2) do |i|
-        if Ebetween(finger_start(i+1), self.id,  @finger[i][:id])
+        if Ebetween(finger_start(i+1), self.id,  @finger[i].id)
           @finger[i+1] = @finger[i]
         else
           begin
@@ -143,31 +139,31 @@ module DRChord
     def update_others
       0.upto(M-1) do |i|
         pred = find_predecessor(self.id - 2**i)
-        pred_node = DRbObject::new_with_uri(pred[:uri])
-        pred_node.update_finger_table(self.info, i)
+        pred_node = DRbObject::new_with_uri(pred.uri)
+        pred_node.update_finger_table(@info, i)
       end
     end
 
     def update_finger_table(s, i)
-      if self.id != s[:id] && Ebetween(s[:id], self.id, @finger[i][:id])
+      if self.id != s.id && Ebetween(s.id, self.id, @finger[i].id)
         @finger[i] = s
-        pred_node = DRbObject::new_with_uri(@predecessor[:uri])
+        pred_node = DRbObject::new_with_uri(@predecessor.uri)
         pred_node.update_finger_table(s, i)
       end
     end
 
     def notify(n)
-      if @predecessor == nil || between(n[:id], @predecessor[:id], self.id)
+      if @predecessor == nil || between(n.id, @predecessor.id, self.id)
         self.predecessor = n
       end
     end
 
     def find_successor(id)
-      if betweenE(id, self.id, self.successor[:id])
+      if betweenE(id, self.id, self.successor.id)
         return self.successor
       else
         n1 = self.closest_preceding_finger(id)
-        node = DRbObject::new_with_uri(n1[:uri])
+        node = DRbObject::new_with_uri(n1.uri)
         return node.find_successor(id)
       end
     end
@@ -175,34 +171,34 @@ module DRChord
     def find_predecessor(id)
       return @predecessor if id == self.id
 
-      n1 = DRbObject::new_with_uri(self.info[:uri])
-      while betweenE(id, n1.id, n1.successor[:id]) == false
+      n1 = DRbObject::new_with_uri(@info.uri)
+      while betweenE(id, n1.id, n1.successor.id) == false
         n1_info= n1.closest_preceding_finger(id)
-        n1 = DRbObject::new_with_uri(n1_info[:uri])
+        n1 = DRbObject::new_with_uri(n1_info.uri)
       end
       return n1.info
     end
 
     def closest_preceding_finger(id)
       (M-1).downto(0) do |i|
-        if between(@finger[i][:id], self.id, id)
-          return @finger[i] if alive?(@finger[i][:uri])
+        if between(@finger[i].id, self.id, id)
+          return @finger[i] if alive?(@finger[i].uri)
         end
       end
-      return self.info
+      return @info
     end
 
     def stabilize
       return if active? == false
 
       # 現在の successor が生きているか調べる
-      if self.successor != nil && alive?(self.successor[:uri]) == false
+      if self.successor != nil && alive?(self.successor.uri) == false
         logger.info "Stabilize: Successor node failure has occurred."
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
           (M-1).downto(0) do |i|
-            if alive?(@finger[i][:uri]) == true
+            if alive?(@finger[i].uri) == true
               self.successor = @finger[i]
               stabilize
               return
@@ -220,14 +216,14 @@ module DRChord
       end
 
       # successor の predecessor を取得
-      succ_node = DRbObject::new_with_uri(self.successor[:uri])
+      succ_node = DRbObject::new_with_uri(self.successor.uri)
       x = succ_node.predecessor
-      if x != nil && alive?(x[:uri])
-        if between(x[:id], self.id, self.successor[:id])
+      if x != nil && alive?(x.uri)
+        if between(x.id, self.id, self.successor.id)
           self.successor = x
         end
       end
-      succ_node.notify(self.info)
+      succ_node.notify(@info)
     end
 
     def fix_fingers
@@ -237,19 +233,19 @@ module DRChord
     end
 
     def fix_successor_list
-      list = DRbObject::new_with_uri(self.successor[:uri]).successor_list
+      list = DRbObject::new_with_uri(self.successor.uri).successor_list
       list.unshift(self.successor)
       @successor_list = list[0..SLIST_SIZE-1]
     end
 
     def fix_predecessor
-      if @predecessor != nil && alive?(@predecessor[:uri]) == false
+      if @predecessor != nil && alive?(@predecessor.uri) == false
         old_predecessor = @predecessor
         self.predecessor = nil
 
         # predecessor のレプリカを自身の hash_table にマージし、レプリカからは削除する
-        @hash_table.merge!(@replicas[old_predecessor[:id]])
-        @replicas.delete(old_predecessor[:id])
+        @hash_table.merge!(@replicas[old_predecessor.id])
+        @replicas.delete(old_predecessor.id)
       end
     end
 
@@ -258,7 +254,7 @@ module DRChord
         old_pred = @predecessor
         self.predecessor = new_pred
         @hash_table.merge!(pred_hash)
-        delete_replica(old_pred[:id])
+        delete_replica(old_pred.id)
       end
     end
 
@@ -271,11 +267,11 @@ module DRChord
     end
 
     def leave
-      logger.info "Node #{self.info[:uri]} leaving..."
+      logger.info "Node #{@info.uri} leaving..."
       if self.successor != @predecessor
         begin
-          DRbObject::new_with_uri(self.successor[:uri]).notify_predecessor_leaving(self.info, @predecessor, @hash_table)
-          DRbObject::new_with_uri(@predecessor[:uri]).notify_successor_leaving(self.info, @successor_list) if @predecessor != nil
+          DRbObject::new_with_uri(self.successor.uri).notify_predecessor_leaving(@info, @predecessor, @hash_table)
+          DRbObject::new_with_uri(@predecessor.uri).notify_successor_leaving(@info, @successor_list) if @predecessor != nil
         rescue DRb::DRbConnError
         end
       end
@@ -287,8 +283,8 @@ module DRChord
 
       id = Zlib.crc32(key)
       succ = find_successor(id)
-      if succ == self.info
-        logger.info "#{self.info[:uri]}: get key:#{key}"
+      if succ == @info
+        logger.info "#{self.info.uri}: get key:#{key}"
 
         ret = @hash_table.fetch(id, nil)
         if ret.nil?
@@ -300,7 +296,7 @@ module DRChord
         end
         return ret
       else
-        return DRbObject::new_with_uri(succ[:uri]).get(key)
+        return DRbObject::new_with_uri(succ.uri).get(key)
       end
     end
 
@@ -311,13 +307,13 @@ module DRChord
       succ = find_successor(id)
       if succ == self.info
         @hash_table.store(id, value)
-        logger.info "#{self.info[:uri]}: put key:#{key} value:#{value}"
+        logger.info "#{@info.uri}: put key:#{key} value:#{value}"
         @successor_list.each do |s|
-          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+          DRbObject::new_with_uri(s.uri).insert_replicas(self.id, @hash_table)
         end
         return true
       else
-        DRbObject::new_with_uri(succ[:uri]).put(key, value)
+        DRbObject::new_with_uri(succ.uri).put(key, value)
       end
     end
 
@@ -333,17 +329,17 @@ module DRChord
 
       id = Zlib.crc32(key)
       succ = find_successor(id)
-      if succ == self.info
+      if succ == @info
         ret = @hash_table.delete(id)
         unless ret.nil?
           @successor_list.each do |s|
-            DRbObject::new_with_uri(s[:uri]).delete_replica(self.id, id)
+            DRbObject::new_with_uri(s.uri).delete_replica(self.id, id)
           end
-          logger.info "#{self.info[:uri]}: delete key:#{key}"
+          logger.info "#{@info.uri}: delete key:#{key}"
         end
         return ret
       else
-        DRbObject::new_with_uri(succ[:uri]).delete(key)
+        DRbObject::new_with_uri(succ.uri).delete(key)
       end
     end
 
@@ -359,7 +355,7 @@ module DRChord
 
     def management_replicas
       # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
-      if @predecessor == self.info && self.successor == @predecessor
+      if @predecessor == @info && self.successor == @predecessor
         if @replicas.count > 0
           @replicas.each{|key, value| @hash_table.merge!(value) }
           @replicas.clear
@@ -369,7 +365,7 @@ module DRChord
       # successor_list に最新の replica を配置
       @successor_list.each do |s|
         begin
-          DRbObject::new_with_uri(s[:uri]).insert_replicas(self.id, @hash_table)
+          DRbObject::new_with_uri(s.uri).insert_replicas(self.id, @hash_table)
         rescue DRb::DRbConnError
         end
       end
@@ -377,23 +373,18 @@ module DRChord
 
     def start(bootstrap_node)
       logger.info "Ctrl-C to shutdown node"
-
       join(bootstrap_node)
-
       begin
-        node_thread = Thread.new do
-          loop do
-            if active? == true
-              stabilize
-              fix_fingers
-              fix_successor_list
-              fix_predecessor
-              management_replicas
-            end
-            sleep INTERVAL
+        loop do
+          if active? == true
+            stabilize
+            fix_fingers
+            fix_successor_list
+            fix_predecessor
+            management_replicas
           end
+          sleep INTERVAL
         end
-        node_thread.join
       rescue Interrupt
         logger.info "going to shutdown..."
         leave

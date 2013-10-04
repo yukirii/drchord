@@ -48,5 +48,7 @@ Thread.new do
     end
   end
 end
-
+p front.class
+p front.chord.class
+p front.dhash.class
 front.dhash.start(options[:bootstrap_node])
