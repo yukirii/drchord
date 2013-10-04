@@ -25,7 +25,7 @@ module DRChord
 
       id = Zlib.crc32(key)
       successor_node = @chord.find_successor(id)
-      if successor_node == @chord.info
+      if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
         logger.info "#{@chord.info.uri("dhash")}: put key:#{key} value:#{value}"
         # レプリカの作成
@@ -39,7 +39,7 @@ module DRChord
 
       id = Zlib.crc32(key)
       successor_node = @chord.find_successor(id)
-      if successor_node == @chord.info
+      if successor_node.id == @chord.info.id
         logger.info "#{@chord.info.uri("dhash")}: get key:#{key}"
         ret = @hash_table.fetch(id, nil)
         if ret.nil?
@@ -56,7 +56,7 @@ module DRChord
 
       id = Zlib.crc32(key)
       successor_node = @chord.find_successor(id)
-      if successor_node == @chord.info
+      if successor_node.id == @chord.info.id
         ret = @hash_table.delete(id)
         unless ret.nil?
           # レプリカから削除する
