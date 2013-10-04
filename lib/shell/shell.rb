@@ -4,11 +4,12 @@
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '../util.rb'))
 require  File.expand_path(File.join(drchord_dir, '../node_info.rb'))
+require  File.expand_path(File.join(drchord_dir, '../node.rb'))
 require 'drb/drb'
 
 module DRChord
   class DHTShell
-    INTERVAL = 5
+    INTERVAL = 1
 
     def initialize(options)
       @node = DRbObject::new_with_uri(options[:node])
@@ -16,21 +17,14 @@ module DRChord
 
     def run
       Thread.new do
-        begin
-          loop do
-            @node.chord.active?
-            sleep INTERVAL
-          end
-        rescue DRb::DRbConnError
-          puts "Error: Connection failed - #{@node.chord.__drburi}"; exit
+        loop do
+          alive_monitoring
+          sleep INTERVAL
         end
       end
 
       begin
-        loop do
-          print "\n> "
-          accept_commands
-        end
+        loop { accept_commands }
       rescue Interrupt
         stop
       end
@@ -42,7 +36,17 @@ module DRChord
     end
 
     private
+    def alive_monitoring
+      begin
+        @node.active?
+      rescue DRb::DRbConnError
+        puts "Error: Connection failed - #{@node.__drburi}"; exit
+      end
+    end
+
     def accept_commands
+      print "\n> "
+
       input = STDIN.gets.split
       cmd = input.shift
       args = input

@@ -11,15 +11,18 @@ module DRChord
     def initialize(options, logger)
       @chord = Node.new(options, logger)
       @dhash = DHash.new(@chord, logger)
+      @active = true
     end
 
     def [](args)
       case args
-      when "chord"
-        @chord
-      when "dhash"
-        @dhash
+      when "chord"; return @chord
+      when "dhash"; return @dhash
       end
+    end
+
+    def active?
+      return @active
     end
   end
 end
