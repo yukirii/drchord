@@ -29,8 +29,13 @@ module DRChord
         @hash_table.store(id, value)
         logger.info "#{@chord.info.uri("dhash")}: put key:#{key} value:#{value}"
         # レプリカの作成
+        return true
       else
-        DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value)
+        begin
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value)
+        rescue DRb::DRbConnError
+          return false
+        end
       end
     end
 
@@ -44,10 +49,16 @@ module DRChord
         ret = @hash_table.fetch(id, nil)
         if ret.nil?
           # hash_table にない場合 レプリカを探す
+          return false
+        else
+          return ret
         end
-        return ret
       else
-        return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
+        begin
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
+        rescue DRb::DRbConnError
+          return false
+        end
       end
     end
 
@@ -60,10 +71,17 @@ module DRChord
         ret = @hash_table.delete(id)
         unless ret.nil?
           # レプリカから削除する
+          logger.info "#{@chord.info.uri("dhash")}: delete key:#{key}"
+          return true
+        else
+          return false
         end
-        logger.info "#{@chord.info.uri("dhash")}: delete key:#{key}"
       else
-        DRbObject::new_with_uri(successor_node.uri("dhash")).delete(key)
+        begin
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).delete(key)
+        rescue DRb::DRbConnError
+          return false
+        end
       end
     end
   end
