@@ -10,6 +10,7 @@ module DRChord
   class ReplicationManager
     INTERVAL = 10
 
+    attr_reader :replicas
     def initialize(chord, dhash)
       @chord = chord
       @replicas = {}
@@ -19,7 +20,6 @@ module DRChord
       @replica_thread = Thread.new do
         loop do
           if @chord.active?
-            p @replicas
           end
           sleep INTERVAL
         end
