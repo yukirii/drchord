@@ -266,18 +266,6 @@ module DRChord
       end
     end
 
-    def leave
-      logger.info "Node #{@info.uri} leaving..."
-      if self.successor != @predecessor
-        begin
-          DRbObject::new_with_uri(self.successor.uri).notify_predecessor_leaving(@info, @predecessor, @hash_table)
-          DRbObject::new_with_uri(@predecessor.uri).notify_successor_leaving(@info, @successor_list) if @predecessor != nil
-        rescue DRb::DRbConnError
-        end
-      end
-      @active = false
-    end
-
 =begin
     def get(key)
       return false if key == nil
@@ -374,9 +362,8 @@ module DRChord
     end
 
     def start(bootstrap_node)
-      logger.info "Ctrl-C to shutdown node"
       join(bootstrap_node)
-      begin
+      @chord_thread = Thread.new do
         loop do
           if active? == true
             stabilize
@@ -387,10 +374,20 @@ module DRChord
           end
           sleep INTERVAL
         end
-      rescue Interrupt
-        logger.info "going to shutdown..."
-        leave
       end
+    end
+
+    def leave
+      logger.info "Node #{@info.uri} leaving..."
+      @chord_thread.kill
+      if self.successor != @predecessor
+        begin
+          DRbObject::new_with_uri(self.successor.uri).notify_predecessor_leaving(@info, @predecessor, @hash_table)
+          DRbObject::new_with_uri(@predecessor.uri).notify_successor_leaving(@info, @successor_list) if @predecessor != nil
+        rescue DRb::DRbConnError
+        end
+      end
+      @active = false
     end
 
     private

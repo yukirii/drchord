@@ -4,9 +4,6 @@
 module DRChord
   class Util
     def self.print_node_info(node)
-      p node.class
-      p node.info.class
-      p node.successor.class
       puts "successor:   id: #{node.successor.id}\turi: #{node.successor.uri}"
       if node.predecessor.nil?
         puts "predecessor: nil"
