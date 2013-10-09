@@ -3,28 +3,28 @@
 
 module DRChord
   class Util
-    def self.print_node_info(node)
-      puts "successor:   id: #{node.successor.id}\turi: #{node.successor.uri}"
-      if node.predecessor.nil?
+    def self.print_node_info(chord, dhash)
+      puts "successor:   id: #{chord.successor.id}\turi: #{chord.successor.uri}"
+      if chord.predecessor.nil?
         puts "predecessor: nil"
       else
-        puts "predecessor: id: #{node.predecessor.id}\turi: #{node.predecessor.uri}"
+        puts "predecessor: id: #{chord.predecessor.id}\turi: #{chord.predecessor.uri}"
       end
 
       puts "finger_table: "
-      node.finger.each_with_index do |node, i|
-        puts "\t#{"%02d" % i}: id: #{node.id}\turi: #{node.uri}"
+      chord.finger.each_with_index do |chord, i|
+        puts "\t#{"%02d" % i}: id: #{chord.id}\turi: #{chord.uri}"
       end
 
       puts "successor_list:"
-      node.successor_list.each_with_index do |node, i|
-        puts "\t#{"%02d" % i}: id: #{node.id}\turi: #{node.uri}"
+      chord.successor_list.each_with_index do |chord, i|
+        puts "\t#{"%02d" % i}: id: #{chord.id}\turi: #{chord.uri}"
       end
 
       puts "key & value:"
-      puts "\t#{node.hash_table}"
+      puts "\t#{dhash.hash_table}"
       puts "replicas:"
-      puts "\t#{node.replicas}"
+      #puts "\t#{dhash.replication.replicas}"
     end
   end
 end

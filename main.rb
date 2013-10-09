@@ -44,7 +44,7 @@ Thread.new do
   puts "Press the enter key to print node info..."
   loop do
     if gets == "\n"
-      DRChord::Util.print_node_info(front.chord)
+      DRChord::Util.print_node_info(front.chord, front.dhash)
     end
   end
 end

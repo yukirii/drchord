@@ -9,10 +9,10 @@ require "zlib"
 
 module DRChord
   class DHash
-    attr_reader :logger
+    attr_reader :logger, :hash_table, :replication
     def initialize(chord, logger)
       @chord = chord
-      @replication = ReplicationManager.new(chord)
+      @replication = ReplicationManager.new(chord, self)
       @logger = logger || Logger.new(STDERR)
       @hash_table = {}
     end
@@ -42,8 +42,8 @@ module DRChord
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
+        @replication.create(id, value, @chord.successor_list)
         logger.info "#{@chord.info.uri("dhash")}: put key:#{key} value:#{value}"
-        # レプリカの作成
         return true
       else
         begin
