@@ -85,7 +85,7 @@ module DRChord
       if successor_node.id == @chord.info.id
         ret = @hash_table.delete(id)
         unless ret.nil?
-          # レプリカから削除する
+          @replication.delete(@chord.info.id, id)
           logger.info "#{@chord.info.uri("dhash")}: delete key:#{key}"
           return true
         else

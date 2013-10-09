@@ -47,6 +47,9 @@ module DRChord
       end
     end
 
+    def delete(node_id, replica = nil)
+    end
+
     # 加入時移譲
     def transfer
       p "DRChord::ReplicationManager#transfer"

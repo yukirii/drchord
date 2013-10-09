@@ -3,6 +3,7 @@
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
+require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 require 'zlib'
 require 'drb/drb'
 require 'logger'
@@ -51,7 +52,7 @@ module DRChord
         entries = {}
         # 譲渡するエントリを自身のhash_tableから削除
         @hash_table.each do |key, value|
-          if betweenE(key, self.id, @predecessor.id)
+          if Util.betweenE(key, self.id, @predecessor.id)
             entries.store(key, value)
             @hash_table.delete(key)
           end
@@ -122,7 +123,7 @@ module DRChord
     def build_finger_table(bootstrap_node)
       node = DRbObject::new_with_uri(bootstrap_node)
       0.upto(M-2) do |i|
-        if Ebetween(finger_start(i+1), self.id,  @finger[i].id)
+        if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
           @finger[i+1] = @finger[i]
         else
           begin
@@ -145,7 +146,7 @@ module DRChord
     end
 
     def update_finger_table(s, i)
-      if self.id != s.id && Ebetween(s.id, self.id, @finger[i].id)
+      if self.id != s.id && Util.Ebetween(s.id, self.id, @finger[i].id)
         @finger[i] = s
         pred_node = DRbObject::new_with_uri(@predecessor.uri)
         pred_node.update_finger_table(s, i)
@@ -153,13 +154,13 @@ module DRChord
     end
 
     def notify(n)
-      if @predecessor == nil || between(n.id, @predecessor.id, self.id)
+      if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
       end
     end
 
     def find_successor(id)
-      if betweenE(id, self.id, self.successor.id)
+      if Util.betweenE(id, self.id, self.successor.id)
         return self.successor
       else
         n1 = self.closest_preceding_finger(id)
@@ -172,7 +173,7 @@ module DRChord
       return @predecessor if id == self.id
 
       n1 = DRbObject::new_with_uri(@info.uri)
-      while betweenE(id, n1.id, n1.successor.id) == false
+      while Util.betweenE(id, n1.id, n1.successor.id) == false
         n1_info= n1.closest_preceding_finger(id)
         n1 = DRbObject::new_with_uri(n1_info.uri)
       end
@@ -181,7 +182,7 @@ module DRChord
 
     def closest_preceding_finger(id)
       (M-1).downto(0) do |i|
-        if between(@finger[i].id, self.id, id)
+        if Util.between(@finger[i].id, self.id, id)
           return @finger[i] if alive?(@finger[i].uri)
         end
       end
@@ -219,7 +220,7 @@ module DRChord
       succ_node = DRbObject::new_with_uri(self.successor.uri)
       x = succ_node.predecessor
       if x != nil && alive?(x.uri)
-        if between(x.id, self.id, self.successor.id)
+        if Util.between(x.id, self.id, self.successor.id)
           self.successor = x
         end
       end
@@ -338,7 +339,7 @@ module DRChord
         @replicas.reject!{|key, value| key == node_id }
       else
         if @replicas[node_id].nil? == false
-          @replicas[node_id].reject!{|key, value| betweenE(key, node_id, replica) }
+          @replicas[node_id].reject!{|key, value| Util.betweenE(key, node_id, replica) }
         end
       end
     end
@@ -402,25 +403,6 @@ module DRChord
 
     def finger_start(k)
       return (self.id + 2**k) % 2**M
-    end
-
-    def between(value, initv, endv)
-      return true if initv == endv && initv != value && endv != value
-      if initv < endv
-        return true if initv < value && value < endv
-      else
-        return true if value < 0
-        return true if ((initv < value && value < 2**M) || (0 <= value && value < endv))
-      end
-      return false
-    end
-
-    def Ebetween(value, initv, endv)
-      return value == initv ? true : between(value, initv, endv)
-    end
-
-    def betweenE(value, initv, endv)
-      return value == endv ? true : between(value, initv, endv)
     end
   end
 end

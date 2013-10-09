@@ -3,6 +3,8 @@
 
 module DRChord
   class Util
+    M = 32
+
     def self.print_node_info(chord, dhash)
       puts "successor:   id: #{chord.successor.id}\turi: #{chord.successor.uri}"
       if chord.predecessor.nil?
@@ -25,6 +27,25 @@ module DRChord
       puts "\t#{dhash.hash_table}"
       puts "replicas:"
       puts "\t#{dhash.replication.replicas}"
+    end
+
+    def self.between(value, initv, endv)
+      return true if initv == endv && initv != value && endv != value
+      if initv < endv
+        return true if initv < value && value < endv
+      else
+        return true if value < 0
+        return true if ((initv < value && value < 2**M) || (0 <= value && value < endv))
+      end
+      return false
+    end
+
+    def self.Ebetween(value, initv, endv)
+      return value == initv ? true : between(value, initv, endv)
+    end
+
+    def self.betweenE(value, initv, endv)
+      return value == endv ? true : between(value, initv, endv)
     end
   end
 end
