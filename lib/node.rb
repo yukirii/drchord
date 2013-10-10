@@ -4,12 +4,15 @@
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/util.rb'))
-require 'zlib'
+require 'observer'
 require 'drb/drb'
 require 'logger'
+require 'zlib'
 
 module DRChord
   class Node
+    include Observable
+
     M = 32
     SLIST_SIZE = 3
     INTERVAL = 5
@@ -48,6 +51,9 @@ module DRChord
       @predecessor = node
       logger.info "set predecessor = #{node.nil? ? "nil" : node.uri}"
 
+      changed
+      notify_observers
+=begin
       if node != nil && node != @info
         entries = {}
         # 譲渡するエントリを自身のhash_tableから削除
@@ -77,6 +83,7 @@ module DRChord
           end
         end
       end
+=end
     end
 
     def id

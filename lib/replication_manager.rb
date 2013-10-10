@@ -13,6 +13,8 @@ module DRChord
     attr_reader :replicas
     def initialize(chord, dhash)
       @chord = chord
+      @chord.add_observer(self, :transfer)
+
       @replicas = {}
     end
 
