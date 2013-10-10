@@ -35,14 +35,6 @@ module DRChord
       @replica_thread.kill
     end
 
-    # 新規レプリカの配置処理
-    def create(id, value, successor_list)
-      successor_list.each do |s|
-        dhash = DRbObject::new_with_uri(s.uri("dhash"))
-        dhash.replication.insert(@chord.info.id, {:id => value})
-      end
-    end
-
     def insert(node_id, hash)
       return if @chord.info.id == node_id
       if @replicas[node_id].nil?
@@ -56,9 +48,17 @@ module DRChord
       if replica.nil?
         @replicas.reject!{|id, hash| id == node_id }
       else
-        unless @replica[node_id].nil?
+        unless @replicas[node_id].nil?
           @replicas[node_id].reject!{|key, value| Util.betweenE(key, node_id, replica) }
         end
+      end
+    end
+
+    # 新規レプリカの配置処理
+    def create(id, value, successor_list)
+      successor_list.each do |s|
+        dhash = DRbObject::new_with_uri(s.uri("dhash"))
+        dhash.replication.insert(@chord.info.id, {id => value})
       end
     end
 

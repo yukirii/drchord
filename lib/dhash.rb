@@ -19,9 +19,9 @@ module DRChord
 
     def start(bootstrap = nil)
       logger.info "Ctrl-C to shutdown node"
-      @chord_thread = @chord.start(bootstrap)
-      @replication_thread = @replication.start
       begin
+        @chord_thread = @chord.start(bootstrap)
+        @replication_thread = @replication.start
         @chord_thread.join
         @replication_thread.join
       rescue Interrupt

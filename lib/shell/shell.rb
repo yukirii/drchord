@@ -53,7 +53,7 @@ module DRChord
 
       case cmd
       when "status"
-        Util.print_node_info(@node.chord, @node.chord)
+        Util.print_node_info(@node.chord, @node.dhash)
       when "put"; put(args)
       when "get"; get(args)
       when "delete", "remove"; delete(args)

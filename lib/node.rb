@@ -334,7 +334,6 @@ module DRChord
         DRbObject::new_with_uri(succ.uri).delete(key)
       end
     end
-=end
 
     def insert_replicas(node_id, entries)
       # 自分自身のレプリカは持たない
@@ -352,6 +351,7 @@ module DRChord
         end
       end
     end
+=end
 
     def management_replicas
       # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
@@ -380,7 +380,7 @@ module DRChord
             fix_fingers
             fix_successor_list
             fix_predecessor
-            management_replicas
+            #management_replicas
           end
           sleep INTERVAL
         end
