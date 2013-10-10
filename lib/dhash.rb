@@ -9,10 +9,10 @@ require "zlib"
 
 module DRChord
   class DHash
-    attr_reader :logger, :hash_table, :replication
+    attr_reader :logger, :chord, :hash_table, :replication
     def initialize(chord, logger)
       @chord = chord
-      @replication = ReplicationManager.new(chord, self)
+      @replication = ReplicationManager.new(self)
       @logger = logger || Logger.new(STDERR)
       @hash_table = {}
     end
@@ -98,6 +98,10 @@ module DRChord
           return false
         end
       end
+    end
+
+    def insert_entries(entries)
+      @hash_table.merge!(entries)
     end
   end
 end

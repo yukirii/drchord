@@ -51,8 +51,11 @@ module DRChord
       @predecessor = node
       logger.info "set predecessor = #{node.nil? ? "nil" : node.uri}"
 
-      changed
-      notify_observers
+      if node != nil && node != @info
+        changed
+        notify_observers(@predecessor)
+      end
+
 =begin
       if node != nil && node != @info
         entries = {}
@@ -88,7 +91,6 @@ module DRChord
 
     def id
       return @info.id
-      #return Zlib.crc32("#{@ip}:#{@port}")
     end
 
     def insert_entries(entries)
