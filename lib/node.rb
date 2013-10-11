@@ -289,6 +289,16 @@ module DRChord
     end
 =end
 
+    protected
+    def closest_preceding_finger(id)
+      (M-1).downto(0) do |i|
+        if Util.between(@finger[i].id, self.id, id)
+          return @finger[i] if alive?(@finger[i].uri)
+        end
+      end
+      return @info
+    end
+
     private
     def alive?(uri)
       begin
@@ -301,15 +311,6 @@ module DRChord
 
     def finger_start(k)
       return (self.id + 2**k) % 2**M
-    end
-
-    def closest_preceding_finger(id)
-      (M-1).downto(0) do |i|
-        if Util.between(@finger[i].id, self.id, id)
-          return @finger[i] if alive?(@finger[i].uri)
-        end
-      end
-      return @info
     end
 
     def stabilize
