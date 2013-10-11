@@ -14,15 +14,16 @@ require File.expand_path(File.join(drchord_dir, '/lib/front.rb'))
 require File.expand_path(File.join(drchord_dir, '/lib/util.rb'))
 require 'logger'
 
-front = DRChord::Front.new(Logger.new(STDERR))
+logger = Logger.new(STDERR)
+logger.level = Logger::DEBUG
+
+front = DRChord::Front.new(logger)
 front.start
 
 Thread.new do
-  puts "Press the enter key to print node info..."
+  logger.info "Press the enter key to print node info..."
   loop do
-    if gets == "\n"
-      DRChord::Util.print_node_info(front.chord, front.dhash)
-    end
+    DRChord::Util.print_node_info(front.chord, front.dhash) if gets == "\n"
   end
 end
 

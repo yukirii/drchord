@@ -47,12 +47,12 @@ module DRChord
 
     def successor=(node)
       @finger[0] = node
-      logger.info "set successor = #{@finger[0].uri}"
+      logger.debug "set successor = #{@finger[0].uri}"
     end
 
     def predecessor=(node)
       @predecessor = node
-      logger.info "set predecessor = #{node.nil? ? "nil" : node.uri}"
+      logger.debug "set predecessor = #{node.nil? ? "nil" : node.uri}"
 
       if node != nil && node != @info
         changed
@@ -75,7 +75,7 @@ module DRChord
           node = DRbObject::new_with_uri(bootstrap_node)
           self.successor = node.find_successor(self.id)
         rescue DRb::DRbConnError => ex
-          logger.error "Error: Connection failed - #{node.__drburi}"
+          logger.error "Connection failed - #{node.__drburi}"
           logger.error ex.message
           exit
         end
@@ -105,7 +105,7 @@ module DRChord
           begin
             @finger[i+1] = node.find_successor(finger_start(i+1))
           rescue DRb::DRbConnError => ex
-            logger.error "Error: Connection failed - #{node.__drburi}"
+            logger.error "Connection failed - #{node.__drburi}"
             logger.error ex.message
             exit
           end
@@ -146,6 +146,15 @@ module DRChord
         n1 = DRbObject::new_with_uri(n1_info.uri)
       end
       return n1.info
+    end
+
+    def closest_preceding_finger(id)
+      (M-1).downto(0) do |i|
+        if Util.between(@finger[i].id, self.id, id)
+          return @finger[i] if alive?(@finger[i].uri)
+        end
+      end
+      return @info
     end
 
     def start(bootstrap_node)
@@ -195,81 +204,6 @@ module DRChord
     end
 
 =begin
-    def get(key)
-      return false if key == nil
-
-      id = Zlib.crc32(key)
-      succ = find_successor(id)
-      if succ == @info
-        logger.info "#{self.info.uri}: get key:#{key}"
-
-        ret = @hash_table.fetch(id, nil)
-        if ret.nil?
-          # hash_table にない場合 replica 内を探す
-          @replicas.each do |node_id, hash|
-            ret = hash.fetch(id, nil)
-            break unless ret.nil?
-          end
-        end
-        return ret
-      else
-        return DRbObject::new_with_uri(succ.uri).get(key)
-      end
-    end
-
-    def put(key, value)
-      return false if key == nil
-
-      id = Zlib.crc32(key)
-      succ = find_successor(id)
-      if succ == self.info
-        @hash_table.store(id, value)
-        logger.info "#{@info.uri}: put key:#{key} value:#{value}"
-        @successor_list.each do |s|
-          DRbObject::new_with_uri(s.uri).insert_replicas(self.id, @hash_table)
-        end
-        return true
-      else
-        DRbObject::new_with_uri(succ.uri).put(key, value)
-      end
-    end
-
-    def delete(key)
-      return false if key == nil
-
-      id = Zlib.crc32(key)
-      succ = find_successor(id)
-      if succ == @info
-        ret = @hash_table.delete(id)
-        unless ret.nil?
-          @successor_list.each do |s|
-            DRbObject::new_with_uri(s.uri).delete_replica(self.id, id)
-          end
-          logger.info "#{@info.uri}: delete key:#{key}"
-        end
-        return ret
-      else
-        DRbObject::new_with_uri(succ.uri).delete(key)
-      end
-    end
-
-    def insert_replicas(node_id, entries)
-      # 自分自身のレプリカは持たない
-      if self.id != node_id
-        @replicas.store(node_id, entries)
-      end
-    end
-
-    def delete_replica(node_id, replica = nil)
-      if replica.nil?
-        @replicas.reject!{|key, value| key == node_id }
-      else
-        if @replicas[node_id].nil? == false
-          @replicas[node_id].reject!{|key, value| Util.betweenE(key, node_id, replica) }
-        end
-      end
-    end
-
     def management_replicas
       # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
       if @predecessor == @info && self.successor == @predecessor
@@ -288,16 +222,6 @@ module DRChord
       end
     end
 =end
-
-    protected
-    def closest_preceding_finger(id)
-      (M-1).downto(0) do |i|
-        if Util.between(@finger[i].id, self.id, id)
-          return @finger[i] if alive?(@finger[i].uri)
-        end
-      end
-      return @info
-    end
 
     private
     def alive?(uri)
@@ -318,7 +242,7 @@ module DRChord
 
       # 現在の successor が生きているか調べる
       if self.successor != nil && alive?(self.successor.uri) == false
-        logger.info "Stabilize: Successor node failure has occurred."
+        logger.debug "Stabilize: Successor node failure has occurred."
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
