@@ -173,7 +173,7 @@ module DRChord
       @chord_thread.kill
       if self.successor != @predecessor
         begin
-          DRbObject::new_with_uri(self.successor.uri).notify_predecessor_leaving(@info, @predecessor, @hash_table)
+          DRbObject::new_with_uri(self.successor.uri).notify_predecessor_leaving(@info, @predecessor)
           DRbObject::new_with_uri(@predecessor.uri).notify_successor_leaving(@info, @successor_list) if @predecessor != nil
         rescue DRb::DRbConnError
         end
@@ -181,12 +181,9 @@ module DRChord
       @active = false
     end
 
-    def notify_predecessor_leaving(node, new_pred, pred_hash)
+    def notify_predecessor_leaving(node, new_predecessor)
       if node == @predecessor
-        old_pred = @predecessor
-        self.predecessor = new_pred
-        @hash_table.merge!(pred_hash)
-        delete_replica(old_pred.id)
+        self.predecessor = new_predecessor
       end
     end
 
@@ -208,30 +205,6 @@ module DRChord
       end
       return candidates_list
     end
-
-=begin
-    def insert_entries(entries)
-      @hash_table.merge!(entries)
-    end
-
-    def management_replicas
-      # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
-      if @predecessor == @info && self.successor == @predecessor
-        if @replicas.count > 0
-          @replicas.each{|key, value| @hash_table.merge!(value) }
-          @replicas.clear
-        end
-      end
-
-      # successor_list に最新の replica を配置
-      @successor_list.each do |s|
-        begin
-          DRbObject::new_with_uri(s.uri).insert_replicas(self.id, @hash_table)
-        rescue DRb::DRbConnError
-        end
-      end
-    end
-=end
 
     private
     def alive?(uri)
