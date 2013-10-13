@@ -59,7 +59,6 @@ module DRChord
     def create(id, value)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |s|
-        p s.uri
         dhash = DRbObject::new_with_uri(s.uri("dhash"))
         dhash.replication.insert(@chord.info.id, {id => value})
       end
@@ -67,6 +66,17 @@ module DRChord
 
     # 加入時移譲
     def transfer(predecessor)
+      candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)
+
+      pair = {}
+      candidates_list.each do |n|
+        node = DRbObject::new_with_uri(n.uri("dhash"))
+        kv_pair = node.request_kv_pair(@chord.id)
+        pair = pair.merge(kv_pair)
+      end
+      @dhash.hash_table = @dhash.hash_table.merge(pair)
+
+=begin
       return if @dhash.hash_table.count == 0
 
       # 自分が保持している key&value のうち新しい predecessor が担当となるものを委譲
@@ -98,6 +108,7 @@ module DRChord
         rescue DRb::DRbConnError
         end
       end
+=end
     end
 
     # 自動再 put

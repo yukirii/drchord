@@ -53,11 +53,6 @@ module DRChord
     def predecessor=(node)
       @predecessor = node
       logger.debug "set predecessor = #{node.nil? ? "nil" : node.uri}"
-
-      if node != nil && node != @info
-        changed
-        notify_observers(@predecessor)
-      end
     end
 
     def join(bootstrap_node = nil)
@@ -87,6 +82,11 @@ module DRChord
           last_node = DRbObject::new_with_uri(@successor_list.last.uri)
           @successor_list << last_node.successor
         end
+      end
+
+      if self.successor.id != @info.id
+        changed
+        notify_observers(@successor)
       end
 
       @active = true
@@ -162,7 +162,6 @@ module DRChord
             fix_fingers
             fix_successor_list
             fix_predecessor
-            #management_replicas
           end
           sleep INTERVAL
         end
@@ -302,10 +301,6 @@ module DRChord
       if @predecessor != nil && alive?(@predecessor.uri) == false
         old_predecessor = @predecessor
         self.predecessor = nil
-
-        # predecessor のレプリカを自身の hash_table にマージし、レプリカからは削除する
-        #@hash_table.merge!(@replicas[old_predecessor.id])
-        #@replicas.delete(old_predecessor.id)
       end
     end
   end

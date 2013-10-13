@@ -9,7 +9,8 @@ require "zlib"
 
 module DRChord
   class DHash
-    attr_reader :logger, :chord, :hash_table, :replication
+    attr_reader :logger, :chord, :replication
+    attr_accessor :hash_table
     def initialize(chord, logger)
       @chord = chord
       @replication = ReplicationManager.new(self)
@@ -102,6 +103,16 @@ module DRChord
 
     def insert_entries(entries)
       @hash_table.merge!(entries)
+    end
+
+    def request_kv_pair(node_id)
+      kv_pair = {}
+      @hash_table.each do |key, value|
+        if Util::betweenE(key, @chord.predecessor.id, node_id)
+          kv_pair.store(key, value)
+        end
+      end
+      return kv_pair
     end
   end
 end
