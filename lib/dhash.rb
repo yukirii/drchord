@@ -101,10 +101,6 @@ module DRChord
       end
     end
 
-    def insert_entries(entries)
-      @hash_table.merge!(entries)
-    end
-
     def request_kv_pair(node_id)
       kv_pair = {}
       @hash_table.each do |key, value|

@@ -13,35 +13,18 @@ module DRChord
     SLIST_SIZE = 3
     NUMBER_OF_COPIES = 3
 
-    attr_reader :replicas
     def initialize(dhash)
       @dhash = dhash
       @chord = @dhash.chord
       @chord.add_observer(self, :transfer)
-
-      @replicas = {}
     end
 
     def start
-      @replica_thread = Thread.new do
-        loop do
-          if @chord.active?
-          end
-          sleep INTERVAL
-        end
-      end
+      @reput_thread = reput
     end
 
     def stop
-      @replica_thread.kill
-    end
-
-    def delete(id)
-      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
-      candidates_list.each do |n|
-        dhash = DRbObject::new_with_uri(n.uri("dhash"))
-        dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
-      end
+      @reput_thread.kill
     end
 
     # 新規レプリカの配置処理
@@ -50,6 +33,14 @@ module DRChord
       candidates_list.each do |s|
         dhash = DRbObject::new_with_uri(s.uri("dhash"))
         dhash.hash_table = dhash.hash_table.merge({id => value})
+      end
+    end
+
+    def delete(id)
+      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+      candidates_list.each do |n|
+        dhash = DRbObject::new_with_uri(n.uri("dhash"))
+        dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
       end
     end
 
@@ -66,8 +57,16 @@ module DRChord
       @dhash.hash_table = @dhash.hash_table.merge(pair)
     end
 
+    private
     # 自動再 put
     def reput
+      Thread.new do
+        loop do
+          if @chord.active?
+          end
+          sleep INTERVAL + rand(10)
+        end
+      end
     end
   end
 end
