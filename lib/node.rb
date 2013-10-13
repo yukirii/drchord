@@ -26,7 +26,7 @@ module DRChord
       @successor_list = []
       @predecessor = nil
 
-      @hash_table = {}
+      #@hash_table = {}
 
       @next = 0
       @active = false
@@ -58,10 +58,6 @@ module DRChord
         changed
         notify_observers(@predecessor)
       end
-    end
-
-    def insert_entries(entries)
-      @hash_table.merge!(entries)
     end
 
     def join(bootstrap_node = nil)
@@ -203,7 +199,22 @@ module DRChord
       end
     end
 
+    def successor_candidates(id, max_number)
+      candidates_list = []
+      first_node = DRbObject::new_with_uri(find_successor(id).uri)
+      candidates_list << first_node.successor
+      while candidates_list.count < max_number
+        last_node = DRbObject::new_with_uri(candidates_list.last.uri)
+        candidates_list << last_node.successor
+      end
+      return candidates_list
+    end
+
 =begin
+    def insert_entries(entries)
+      @hash_table.merge!(entries)
+    end
+
     def management_replicas
       # successor == predecessor (Ringに自ノードのみ)の場合は全レプリカを hash_table に移動
       if @predecessor == @info && self.successor == @predecessor

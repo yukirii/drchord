@@ -11,6 +11,7 @@ module DRChord
   class ReplicationManager
     INTERVAL = 10
     SLIST_SIZE = 3
+    NUMBER_OF_COPIES = 3
 
     attr_reader :replicas
     def initialize(dhash)
@@ -55,8 +56,10 @@ module DRChord
     end
 
     # 新規レプリカの配置処理
-    def create(id, value, successor_list)
-      successor_list.each do |s|
+    def create(id, value)
+      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+      candidates_list.each do |s|
+        p s.uri
         dhash = DRbObject::new_with_uri(s.uri("dhash"))
         dhash.replication.insert(@chord.info.id, {id => value})
       end
