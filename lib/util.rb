@@ -30,8 +30,6 @@ module DRChord
 
       puts "key & value:"
       puts "\t#{dhash.hash_table}"
-      puts "replicas:"
-      puts "\t#{dhash.replication.replicas}"
     end
 
     def self.between(value, initv, endv)

@@ -36,22 +36,11 @@ module DRChord
       @replica_thread.kill
     end
 
-    def insert(node_id, hash)
-      return if @chord.info.id == node_id
-      if @replicas[node_id].nil?
-        @replicas[node_id] = hash
-      else
-        @replicas[node_id].merge!(hash)
-      end
-    end
-
-    def delete(node_id, replica = nil)
-      if replica.nil?
-        @replicas.reject!{|id, hash| id == node_id }
-      else
-        unless @replicas[node_id].nil?
-          @replicas[node_id].reject!{|key, value| Util.betweenE(key, node_id, replica) }
-        end
+    def delete(id)
+      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+      candidates_list.each do |n|
+        dhash = DRbObject::new_with_uri(n.uri("dhash"))
+        dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
       end
     end
 
@@ -60,7 +49,7 @@ module DRChord
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |s|
         dhash = DRbObject::new_with_uri(s.uri("dhash"))
-        dhash.replication.insert(@chord.info.id, {id => value})
+        dhash.hash_table = dhash.hash_table.merge({id => value})
       end
     end
 
@@ -75,40 +64,6 @@ module DRChord
         pair = pair.merge(kv_pair)
       end
       @dhash.hash_table = @dhash.hash_table.merge(pair)
-
-=begin
-      return if @dhash.hash_table.count == 0
-
-      # 自分が保持している key&value のうち新しい predecessor が担当となるものを委譲
-      entries = {}
-      @dhash.hash_table.each do |key, value|
-        if Util.betweenE(key, @chord.info.id, predecessor.id)
-          entries.store(key, value)
-          @dhash.hash_table.delete(key)
-        end
-      end
-      @replicas.store(predecessor.id, entries)
-      DRbObject::new_with_uri(predecessor.uri("dhash")).insert_entries(entries)
-
-      # successor_list の最後のノードのレプリカから、predecessor のものを削除
-      if @chord.successor_list.count == SLIST_SIZE
-        last_successor = @chord.successor_list.last
-        begin
-          last_successor_dhash = DRbObject::new_with_uri(last_successor.uri("dhash"))
-          last_successor_dhash.replication.delete(predecessor.id)
-        rescue DRb::DRbConnError
-        end
-      end
-
-      # 新しい replica の配置
-      @chord.successor_list.each do |s|
-        begin
-          successor_dhash = DRbObject::new_with_uri(s.uri("dhash"))
-          successor_dhash.replication.insert(@chord.info.id, @dhash.hash_table)
-        rescue DRb::DRbConnError
-        end
-      end
-=end
     end
 
     # 自動再 put
