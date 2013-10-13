@@ -9,7 +9,7 @@ require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 
 module DRChord
   class ReplicationManager
-    INTERVAL = 10
+    INTERVAL = 30
     SLIST_SIZE = 3
     NUMBER_OF_COPIES = 3
 
@@ -20,7 +20,12 @@ module DRChord
     end
 
     def start
-      @reput_thread = reput
+      @reput_thread = Thread.new do
+        loop do
+          reput
+          sleep INTERVAL + rand(30)
+        end
+      end
     end
 
     def stop
@@ -60,11 +65,9 @@ module DRChord
     private
     # 自動再 put
     def reput
-      Thread.new do
-        loop do
-          if @chord.active?
-          end
-          sleep INTERVAL + rand(10)
+      if @chord.active?
+        @dhash.hash_table.each do |key, value|
+          @dhash.put(key, value, false)
         end
       end
     end

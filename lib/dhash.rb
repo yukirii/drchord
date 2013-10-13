@@ -36,10 +36,10 @@ module DRChord
       @chord.leave
     end
 
-    def put(key, value)
+    def put(key, value, hash_calculate = true)
       return false if key == nil
 
-      id = Zlib.crc32(key)
+      id = hash_calculate ? Zlib.crc32(key) : key
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
@@ -48,7 +48,7 @@ module DRChord
         return true
       else
         begin
-          return DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value)
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value, hash_calculate)
         rescue DRb::DRbConnError
           return false
         end
@@ -64,7 +64,6 @@ module DRChord
         logger.debug "#{@chord.info.uri("dhash")}: get key:#{key}"
         ret = @hash_table.fetch(id, nil)
         if ret.nil?
-          # hash_table にない場合 レプリカを探す
           return false
         else
           return ret

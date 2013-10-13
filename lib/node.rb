@@ -7,7 +7,6 @@ require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 require 'observer'
 require 'drb/drb'
 require 'logger'
-require 'zlib'
 
 module DRChord
   class Node
@@ -25,8 +24,6 @@ module DRChord
       @finger = []
       @successor_list = []
       @predecessor = nil
-
-      #@hash_table = {}
 
       @next = 0
       @active = false
