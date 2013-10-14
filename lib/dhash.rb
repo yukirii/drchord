@@ -99,15 +99,5 @@ module DRChord
         end
       end
     end
-
-    def request_kv_pair(node_id)
-      kv_pair = {}
-      @hash_table.each do |key, value|
-        if Util::betweenE(key, @chord.predecessor.id, node_id)
-          kv_pair.store(key, value)
-        end
-      end
-      return kv_pair
-    end
   end
 end

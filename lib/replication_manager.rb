@@ -11,7 +11,7 @@ module DRChord
   class ReplicationManager
     INTERVAL = 30
     SLIST_SIZE = 3
-    NUMBER_OF_COPIES = 3
+    NUMBER_OF_COPIES = 1
 
     def initialize(dhash)
       @dhash = dhash
@@ -22,8 +22,8 @@ module DRChord
     def start
       @reput_thread = Thread.new do
         loop do
-          reput
-          sleep INTERVAL + rand(30)
+          #reput
+          sleep INTERVAL - 5 + rand(10)
         end
       end
     end
@@ -52,14 +52,25 @@ module DRChord
     # 加入時移譲
     def transfer(predecessor)
       candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)
+      succs_pred = DRbObject::new_with_uri(@chord.successor.uri).predecessor
 
       pair = {}
       candidates_list.each do |n|
-        node = DRbObject::new_with_uri(n.uri("dhash"))
-        kv_pair = node.request_kv_pair(@chord.id)
+        dhash = DRbObject::new_with_uri(n.uri("dhash"))
+        kv_pair = dhash.replication.request_kv_pair(succs_pred.id, @chord.id)
         pair = pair.merge(kv_pair)
       end
       @dhash.hash_table = @dhash.hash_table.merge(pair)
+    end
+
+    def request_kv_pair(pred, node_id)
+      kv_pair = {}
+      @dhash.hash_table.each do |key, value|
+        if Util::betweenE(key, pred, node_id)
+          kv_pair.store(key, value)
+        end
+      end
+      return kv_pair
     end
 
     private
