@@ -56,16 +56,28 @@ module DRChord
 
     # 加入時移譲
     def transfer(predecessor)
-      candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)
-      succs_pred = DRbObject::new_with_uri(@chord.successor.uri).predecessor
+      cnt = 0
+      while cnt < 3
+        candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)
+        succs_pred = DRbObject::new_with_uri(@chord.successor.uri).predecessor
 
-      pair = {}
-      candidates_list.each do |n|
-        dhash = DRbObject::new_with_uri(n.uri("dhash"))
-        kv_pair = dhash.replication.request_kv_pair(succs_pred.id, @chord.id)
-        pair = pair.merge(kv_pair)
+        if succs_pred.nil?
+          cnt += 1
+          logger.debug "Key-Value transfer - Successor's predecessor is nil. retrying...(#{cnt})"
+          sleep 3
+        else
+          pair = {}
+          candidates_list.each do |n|
+            dhash = DRbObject::new_with_uri(n.uri("dhash"))
+            kv_pair = dhash.replication.request_kv_pair(succs_pred.id, @chord.id)
+            pair = pair.merge(kv_pair)
+          end
+          @dhash.hash_table = @dhash.hash_table.merge(pair)
+          logger.debug "Key-Value transfer - successful. "
+          return true
+        end
       end
-      @dhash.hash_table = @dhash.hash_table.merge(pair)
+      logger.debug "Key-Value transfer - failed. "
     end
 
     def request_kv_pair(pred, node_id)
