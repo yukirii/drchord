@@ -99,7 +99,7 @@ module DRChord
         @dhash.put(key, value, false)
         logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key} value:#{value}"
 
-        if Util::betweenE(key, @chord.predecessor.id, @chord.id) == false
+        if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == false
           candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
 
           keys_owner = false

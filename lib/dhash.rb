@@ -56,20 +56,38 @@ module DRChord
       end
     end
 
-    def get(key)
+    def get(key, find_remote = true)
       return false if key == nil
 
       id = Zlib.crc32(key)
-      successor_node = @chord.find_successor(id)
-      if successor_node.id == @chord.info.id
-        logger.debug "#{@chord.info.uri("dhash")}: get key:#{key}"
-        ret = @hash_table.fetch(id, nil)
-        return ret.nil? ? false : ret
+
+      if find_remote == false
+        return @hash_table.fetch(id, nil)
       else
-        begin
-          return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
-        rescue DRb::DRbConnError
-          return false
+        successor_node = @chord.find_successor(id)
+        if successor_node.id == @chord.info.id
+          ret = @hash_table.fetch(id, nil)
+          logger.debug "#{@chord.info.uri("dhash")}: get key:#{key}"
+
+          # successor ノードに Key-value ペアがない場合、次の候補を探す
+          if ret.nil?
+            candidates_list = @chord.successor_candidates(id, 3)
+            candidates_list = candidates_list.uniq
+            candidates_list.each do |candidate_node|
+              if candidate_node.id != @chord.id
+                ret = DRbObject::new_with_uri(candidate_node.uri("dhash")).get(key, false)
+                break unless ret.nil?
+              end
+            end
+          end
+
+          return ret.nil? || ret == false ? false : ret
+        else
+          begin
+            return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
+          rescue DRb::DRbConnError
+            return false
+          end
         end
       end
     end
