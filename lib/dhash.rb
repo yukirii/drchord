@@ -12,9 +12,9 @@ module DRChord
     attr_reader :logger, :chord, :replication
     attr_accessor :hash_table
     def initialize(chord, logger)
-      @chord = chord
-      @replication = ReplicationManager.new(self)
       @logger = logger || Logger.new(STDERR)
+      @chord = chord
+      @replication = ReplicationManager.new(self, logger)
       @hash_table = {}
     end
 
@@ -44,7 +44,7 @@ module DRChord
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
         @replication.create(id, value)
-        logger.debug "#{@chord.info.uri("dhash")}: put key:#{key} value:#{value}"
+        logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key} value:#{value}"
         return true
       else
         begin
@@ -63,11 +63,7 @@ module DRChord
       if successor_node.id == @chord.info.id
         logger.debug "#{@chord.info.uri("dhash")}: get key:#{key}"
         ret = @hash_table.fetch(id, nil)
-        if ret.nil?
-          return false
-        else
-          return ret
-        end
+        return ret.nil? ? false : ret
       else
         begin
           return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)

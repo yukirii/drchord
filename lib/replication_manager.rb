@@ -11,9 +11,11 @@ module DRChord
   class ReplicationManager
     INTERVAL = 30
     SLIST_SIZE = 3
-    NUMBER_OF_COPIES = 1
+    NUMBER_OF_COPIES = 3
 
-    def initialize(dhash)
+    attr_reader :logger
+    def initialize(dhash, logger)
+      @logger = logger || Logger.new(STDERR)
       @dhash = dhash
       @chord = @dhash.chord
       @chord.add_observer(self, :transfer)
@@ -22,8 +24,8 @@ module DRChord
     def start
       @reput_thread = Thread.new do
         loop do
-          #reput
           sleep INTERVAL - 5 + rand(10)
+          reput
         end
       end
     end
@@ -36,11 +38,14 @@ module DRChord
     def create(id, value)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |s|
-        dhash = DRbObject::new_with_uri(s.uri("dhash"))
-        dhash.hash_table = dhash.hash_table.merge({id => value})
+        if s.id != @chord.id
+          dhash = DRbObject::new_with_uri(s.uri("dhash"))
+          dhash.hash_table = dhash.hash_table.merge({id => value})
+        end
       end
     end
 
+    # レプリカの削除
     def delete(id)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |n|
@@ -76,9 +81,26 @@ module DRChord
     private
     # 自動再 put
     def reput
-      if @chord.active?
-        @dhash.hash_table.each do |key, value|
-          @dhash.put(key, value, false)
+      return false if @chord.active? == false
+
+      @dhash.hash_table.each do |key, value|
+        @dhash.put(key, value, false)
+        logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key} value:#{value}"
+
+        if Util::betweenE(key, @chord.predecessor.id, @chord.id) == false
+          candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
+
+          keys_owner = false
+          candidates_list.each do |node|
+            if node.id == @chord.id
+              keys_owner = true
+              break
+            end
+          end
+
+          if keys_owner == false
+            @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
+          end
         end
       end
     end
