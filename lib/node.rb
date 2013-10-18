@@ -28,7 +28,7 @@ module DRChord
       @next = 0
       @active = false
     end
-    attr_reader :logger, :info, :finger, :successor_list, :hash_table, :replicas, :predecessor
+    attr_reader :logger, :info, :finger, :successor_list, :predecessor
 
     def id
       return @info.id
@@ -269,7 +269,6 @@ module DRChord
 
     def fix_predecessor
       if @predecessor != nil && alive?(@predecessor.uri) == false
-        old_predecessor = @predecessor
         self.predecessor = nil
       end
     end
