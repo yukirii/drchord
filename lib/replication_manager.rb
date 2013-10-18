@@ -96,25 +96,30 @@ module DRChord
       return false if @chord.active? == false
 
       @dhash.hash_table.each do |key, value|
-        @dhash.put(key, value, false)
-        logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key} value:#{value}"
+        p keys_owner?(key)
+        if keys_owner?(key) == false
+          @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
+          logger.debug "#{@chord.info.uri("dhash")}: Delete key:#{key} value:#{value}"
+        else
+          @dhash.put(key, value, false)
+          logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key} value:#{value}"
+        end
+      end
+    end
 
-        if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == false
-          candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
-
-          keys_owner = false
-          candidates_list.each do |node|
-            if node.id == @chord.id
-              keys_owner = true
-              break
-            end
-          end
-
-          if keys_owner == false
-            @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
+    def keys_owner?(key)
+      if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == true
+        return true
+      else
+        candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
+        candidates_list.each do |node|
+          if node.id == @chord.id
+            return true
+            break
           end
         end
       end
+      return false
     end
   end
 end
