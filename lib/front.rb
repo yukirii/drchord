@@ -38,7 +38,7 @@ module DRChord
     def start
       begin
         DRb.start_service(uri, self, :safe_level => 1)
-        @logger.info "dRuby server start - #{DRb.uri}"
+        @logger.info "dRuby server start - #{uri}"
       rescue Errno::EADDRINUSE
         @logger.error "Address and port already in use. - #{uri}"; exit
       end
