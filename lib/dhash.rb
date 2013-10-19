@@ -80,7 +80,6 @@ module DRChord
               end
             end
           end
-
           return ret.nil? || ret == false ? false : ret
         else
           begin
