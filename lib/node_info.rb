@@ -22,6 +22,8 @@ module DRChord
         uri += "?chord"
       when "dhash"
         uri += "?dhash"
+      else
+        nil
       end
     end
   end
