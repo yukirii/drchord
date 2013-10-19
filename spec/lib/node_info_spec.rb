@@ -5,7 +5,7 @@ require 'spec_helper'
 require 'zlib'
 
 describe DRChord::NodeInformation do
-  before :all do
+  before do
     @ip = '127.0.0.1'
     @port = 3000
     @info = DRChord::NodeInformation.new(@ip, @port)

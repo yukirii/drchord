@@ -6,7 +6,7 @@ require 'spec_helper'
 require 'drb/drb'
 
 describe DRChord::Front do
-  before :all do
+  before do
     @default_options = {:ip => '127.0.0.1', :port => 3000}
     @front = DRChord::Front.new(nil)
   end
