@@ -16,6 +16,7 @@ module DRChord
     SLIST_SIZE = 3
     INTERVAL = 5
 
+    attr_reader :logger, :info, :finger, :successor_list, :predecessor
     def initialize(options, logger = nil)
       @logger = logger || Logger.new(STDERR)
 
@@ -27,8 +28,8 @@ module DRChord
 
       @next = 0
       @active = false
+      @in_ring = false
     end
-    attr_reader :logger, :info, :finger, :successor_list, :predecessor
 
     def id
       return @info.id
@@ -81,11 +82,6 @@ module DRChord
         end
       end
 
-      if self.successor.id != @info.id
-        changed
-        notify_observers(@successor)
-      end
-
       @active = true
     end
 
@@ -117,6 +113,13 @@ module DRChord
     def notify(n)
       if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
+
+        # 加入時委譲処理の要求
+        if @in_ring == false
+          @in_ring = true
+          changed
+          notify_observers(nil)
+        end
       end
     end
 
@@ -236,6 +239,7 @@ module DRChord
 
           # There is nothing we can do, its over.
           @active = false
+          @in_ring = false
           return
         else
           self.successor = @successor_list.first
