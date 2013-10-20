@@ -15,7 +15,7 @@ describe DRChord::Front do
     expect(@front.uri).to eq("druby://#{@default_options[:ip]}:#{@default_options[:port]}")
   end
 
-  it "dRuby サーバにアクセスできる" do
+  it "start で DRb.start_service が呼ばれる" do
     DRb.should_receive(:start_service).with(@front.uri, @front, :safe_level => 1)
     @front.start
   end

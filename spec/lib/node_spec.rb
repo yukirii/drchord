@@ -1,13 +1,23 @@
 # encoding: utf-8
 
+require './lib/front.rb'
 require './lib/node.rb'
 require 'spec_helper'
-require 'zlib'
 require 'drb/drb'
 
 describe DRChord::Node do
   before do
-    @options = {:ip => '127.0.0.1', :port => 3000}
-    @node = DRChord::Node.new(@options)
+    @front = DRChord::Front.new(nil)
+    @chord = @front.chord
+    Thread.new do
+      @front.start
+      @front.dhash.start
+    end
+  end
+
+  it "Chord にアクセスできる" do
+    uri = @chord.info.uri
+    expect(DRbObject.new_with_uri(uri).id).to eq(@chord.id)
   end
 end
+
