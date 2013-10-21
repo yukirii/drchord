@@ -8,7 +8,7 @@ require File.expand_path(File.join(drchord_dir, '/replication_manager.rb'))
 
 module DRChord
   class Util
-    M = 32
+    HASH_BIT = 32
 
     def self.print_node_info(chord, dhash)
       puts "successor:   id: #{chord.successor.id}\turi: #{chord.successor.uri}"
@@ -38,7 +38,7 @@ module DRChord
         return true if initv < value && value < endv
       else
         return true if value < 0
-        return true if ((initv < value && value < 2**M) || (0 <= value && value < endv))
+        return true if ((initv < value && value < 2**HASH_BIT) || (0 <= value && value < endv))
       end
       return false
     end

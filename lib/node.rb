@@ -12,7 +12,7 @@ module DRChord
   class Node
     include Observable
 
-    M = 32
+    HASH_BIT = 32
     SLIST_SIZE = 3
     INTERVAL = 5
 
@@ -57,7 +57,7 @@ module DRChord
       if bootstrap_node.nil?
         self.predecessor = nil
         self.successor = @info
-        (M-1).times { @finger << @info }
+        (HASH_BIT-1).times { @finger << @info }
       else
         self.predecessor = nil
         begin
@@ -87,7 +87,7 @@ module DRChord
 
     def build_finger_table(bootstrap_node)
       node = DRbObject::new_with_uri(bootstrap_node)
-      0.upto(M-2) do |i|
+      0.upto(HASH_BIT-2) do |i|
         if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
           @finger[i+1] = @finger[i]
         else
@@ -145,7 +145,7 @@ module DRChord
     end
 
     def closest_preceding_finger(id)
-      (M-1).downto(0) do |i|
+      (HASH_BIT-1).downto(0) do |i|
         if Util.between(@finger[i].id, self.id, id)
           return @finger[i] if alive?(@finger[i].uri)
         end
@@ -217,7 +217,7 @@ module DRChord
     end
 
     def finger_start(k)
-      return (self.id + 2**k) % 2**M
+      return (self.id + 2**k) % 2**HASH_BIT
     end
 
     def stabilize
@@ -229,7 +229,7 @@ module DRChord
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
-          (M-1).downto(0) do |i|
+          (HASH_BIT-1).downto(0) do |i|
             if alive?(@finger[i].uri) == true
               self.successor = @finger[i]
               stabilize
@@ -261,7 +261,7 @@ module DRChord
 
     def fix_fingers
       @next += 1
-      @next = 0 if @next >= M
+      @next = 0 if @next >= HASH_BIT
       @finger[@next] = find_successor(finger_start(@next))
     end
 

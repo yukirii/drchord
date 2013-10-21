@@ -5,7 +5,7 @@ require 'spec_helper'
 
 describe DRChord::Util do
   before do
-    @hash_bit = DRChord::Util::M
+    @hash_bit = DRChord::Util::HASH_BIT
     @max_num = 2**@hash_bit - 1
   end
 
