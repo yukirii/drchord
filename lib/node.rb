@@ -119,6 +119,7 @@ module DRChord
           @in_ring = true
           changed
           notify_observers(nil)
+          logger.debug("Join network complete.")
         end
       end
     end
