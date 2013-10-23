@@ -1,3 +1,7 @@
 source "https://rubygems.org"
 
-gem 'rspec'
+group :test do
+  gem 'rspec'
+  gem 'cucumber'
+  gem 'aruba'
+end
