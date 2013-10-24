@@ -13,37 +13,37 @@ After do
   @node.kill
 end
 
-#
-# 共通
-#
-前提 /^: ノードに接続できる$/ do
+When /^: ノードに接続できる$/ do
   @front = DRbObject::new_with_uri("druby://127.0.0.1:3000")
   @front.active?.should == true
 end
 
-#
-# シナリオ: Key-Value の put
-#
-もし /^: Key\-value を put する$/ do
+When /^: Key\-value を put する$/ do
   @ret = @front.dhash.put("hoge", "huga")
 end
 
-ならば /^: 返り値に true が返される$/ do
-  @ret.should == true
+When /^: Value を get する$/ do
+  @ret = @front.dhash.get("hoge")
 end
 
-かつ /^: get した結果が put した Key\-Value と一致する$/ do
+When /^: get した結果が put した Key\-Value と一致する$/ do
   result = @front.dhash.get("hoge")
   result.should == "huga"
 end
 
-#
-# シナリオ: put 時に引数を渡さない
-#
-もし /^: put を引数 nil で実行する$/ do
+When /^: put を引数 nil で実行する$/ do
   @ret = @front.dhash.put(nil, nil)
 end
 
-ならば /^: 返り値に false が返される$/ do
+When /^: 戻り値に true が返される$/ do
+  @ret.should == true
+end
+
+When /^: 戻り値に false が返される$/ do
   @ret.should == false
+end
+
+When /^: 戻り値が nil, false でない$/ do
+  @ret.should_not == nil
+  @ret.should_not == false
 end
