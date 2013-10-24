@@ -4,17 +4,21 @@ require 'drb/drb'
 require 'chukan'
 include Chukan
 
-Before do
-  @node = spawn("ruby main.rb")
-  @node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
-end
+NUM_OF_NODES = 5
 
-After do
-  @node.kill
+AfterConfiguration do
+  @nodes = []
+  NUM_OF_NODES.times do |i|
+    cmd = "ruby main.rb -p 1#{i}000"
+    cmd += " -e localhost:1#{i-1}000" if i != 0
+    node = spawn(cmd)
+    node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
+    @nodes << node
+  end
 end
 
 When /^: ノードに接続できる$/ do
-  @front = DRbObject::new_with_uri("druby://127.0.0.1:3000")
+  @front = DRbObject::new_with_uri("druby://127.0.0.1:10000")
   @front.active?.should == true
 end
 
