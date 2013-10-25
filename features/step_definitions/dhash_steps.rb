@@ -43,6 +43,10 @@ When /^: Key\-Value を delete する$/ do
   @ret = @front.dhash.delete("hoge")
 end
 
+When /^: delete を引数 nil で実行する$/ do
+  @ret = @front.dhash.delete(nil)
+end
+
 When /^: 戻り値に true が返される$/ do
   @ret.should == true
 end
