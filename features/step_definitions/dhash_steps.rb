@@ -2,19 +2,35 @@
 
 require 'drb/drb'
 require 'chukan'
-include Chukan
 
-NUM_OF_NODES = 5
+class MultipleNodes
+  include Chukan
+  NUM_OF_NODES = 5
+
+  attr_accessor :nodes
+  def initialize
+    @nodes = []
+  end
+
+  def start
+    NUM_OF_NODES.times do |i|
+      cmd = "ruby main.rb -p 1#{i}000"
+      cmd += " -e localhost:1#{i-1}000" if i != 0
+      node = spawn(cmd)
+      node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
+      @nodes << node
+    end
+  end
+end
+
+multiple_nodes = MultipleNodes.new
+
+World do
+  multiple_nodes
+end
 
 AfterConfiguration do
-  @nodes = []
-  NUM_OF_NODES.times do |i|
-    cmd = "ruby main.rb -p 1#{i}000"
-    cmd += " -e localhost:1#{i-1}000" if i != 0
-    node = spawn(cmd)
-    node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
-    @nodes << node
-  end
+  multiple_nodes.start
 end
 
 When /^: ノードに接続できる$/ do
