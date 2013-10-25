@@ -34,7 +34,7 @@ AfterConfiguration do
 end
 
 When /^: ノードに接続できる$/ do
-  @front = DRbObject::new_with_uri("druby://127.0.0.1:10000")
+  @front = DRbObject::new_with_uri("druby://127.0.0.1:11000")
   @front.active?.should == true
 end
 
@@ -74,4 +74,8 @@ end
 When /^: 戻り値が nil, false でない$/ do
   @ret.should_not == nil
   @ret.should_not == false
+end
+
+When /^: Key の 担当ノードを Kill する$/ do
+  nodes.first.kill
 end

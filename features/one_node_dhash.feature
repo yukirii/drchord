@@ -39,3 +39,14 @@
     前提: ノードに接続できる
     もし: delete を引数 nil で実行する
     ならば: 戻り値に false が返される
+
+  @churn
+  シナリオ: Key の担当ノードを Kill する
+    前提: ノードに接続できる
+    前提: Key-value を put する
+    前提: Value を get する
+    前提: 戻り値が nil, false でない
+    もし: Key の 担当ノードを Kill する
+    かつ: Value を get する
+    ならば: 戻り値が nil, false でない
+    かつ: get した結果が put した Key-Value と一致する
