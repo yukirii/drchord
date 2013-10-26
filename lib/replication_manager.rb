@@ -48,9 +48,11 @@ module DRChord
     # レプリカの削除
     def delete(id)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
-      candidates_list.each do |n|
-        dhash = DRbObject::new_with_uri(n.uri("dhash"))
-        dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
+      candidates_list.each do |s|
+        if s.id != @chord.id
+          dhash = DRbObject::new_with_uri(s.uri("dhash"))
+          dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
+        end
       end
     end
 
@@ -96,7 +98,6 @@ module DRChord
       return false if @chord.active? == false
 
       @dhash.hash_table.each do |key, value|
-        p keys_owner?(key)
         if keys_owner?(key) == false
           @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
           logger.debug "#{@chord.info.uri("dhash")}: Delete key:#{key} value:#{value}"
@@ -110,13 +111,13 @@ module DRChord
     def keys_owner?(key)
       if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == true
         return true
-      else
-        candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
-        candidates_list.each do |node|
-          if node.id == @chord.id
-            return true
-            break
-          end
+      end
+
+      candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
+      candidates_list.each do |node|
+        if node.id == @chord.id
+          return true
+          break
         end
       end
       return false

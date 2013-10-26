@@ -197,14 +197,29 @@ module DRChord
     end
 
     def successor_candidates(id, max_number)
-      candidates_list = []
-      first_node = DRbObject::new_with_uri(find_successor(id).uri)
-      candidates_list << first_node.successor
-      while candidates_list.count < max_number
-        last_node = DRbObject::new_with_uri(candidates_list.last.uri)
-        candidates_list << last_node.successor
+      list = []
+      begin
+        predecessor_node = DRbObject::new_with_uri(find_predecessor(id).uri)
+        list = predecessor_node.successor_list
+      rescue DRb::DRbConnError
+        begin
+          successor_node = DRbObject::new_with_uri(find_successor(id).uri)
+          list << successor_node.info
+          list += successor_node.successor_list
+        rescue DRb::DRbConnError
+          return false
+        end
       end
-      return candidates_list
+
+      while list.count < max_number
+        begin
+          last = DRbObject::new_with_uri(list.last.uri)
+          list << last.successor
+        rescue DRb::DRbConnError
+          break
+        end
+      end
+      return list[0..max_number-1]
     end
 
     private
