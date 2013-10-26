@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'drb/drb'
+require 'colored'
 require 'chukan'
 require 'yaml'
 
@@ -16,6 +17,7 @@ class MultipleNodes
 
   def start
     @node_list.each_with_index do |node, i|
+      puts "#{i+1}: Startup node - #{node}".green
       cmd = "ruby main.rb -p #{node.split(":")[1]}"
       cmd += " -e #{@node_list[i-1]}" if i != 0
       node = spawn(cmd)
