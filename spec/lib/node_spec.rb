@@ -1,11 +1,11 @@
 # encoding: utf-8
 
 require './lib/front.rb'
-require './lib/node.rb'
+require './lib/chord.rb'
 require 'spec_helper'
 require 'drb/drb'
 
-describe DRChord::Node do
+describe DRChord::Chord do
   before do
     @front = DRChord::Front.new(nil)
     @chord = @front.chord

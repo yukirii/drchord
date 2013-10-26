@@ -4,7 +4,7 @@
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '../util.rb'))
 require  File.expand_path(File.join(drchord_dir, '../node_info.rb'))
-require  File.expand_path(File.join(drchord_dir, '../node.rb'))
+require  File.expand_path(File.join(drchord_dir, '../chord.rb'))
 require 'drb/drb'
 
 module DRChord

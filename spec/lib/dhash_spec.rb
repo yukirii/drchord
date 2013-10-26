@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 require './lib/front.rb'
-require './lib/node.rb'
+require './lib/chord.rb'
 require './lib/node_info.rb'
 require 'spec_helper'
 require 'drb/drb'

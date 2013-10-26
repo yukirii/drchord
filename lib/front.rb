@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
-require File.expand_path(File.join(drchord_dir, '/node.rb'))
+require File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require File.expand_path(File.join(drchord_dir, '/dhash.rb'))
 require 'optparse'
 require 'drb/drb'
@@ -14,7 +14,7 @@ module DRChord
       @logger = logger || Logger.new(STDERR)
       @options = option_parser(default_options)
 
-      @chord = Node.new(@options, @logger)
+      @chord = Chord.new(@options, @logger)
       @dhash = DHash.new(@chord, @logger)
 
       @active = true

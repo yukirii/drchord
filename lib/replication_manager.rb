@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
-require  File.expand_path(File.join(drchord_dir, '/node.rb'))
+require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/dhash.rb'))
 require  File.expand_path(File.join(drchord_dir, '/util.rb'))

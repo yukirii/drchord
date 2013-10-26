@@ -9,7 +9,7 @@ require 'drb/drb'
 require 'logger'
 
 module DRChord
-  class Node
+  class Chord
     include Observable
 
     HASH_BIT = 32
