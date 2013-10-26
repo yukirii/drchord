@@ -36,10 +36,10 @@ module DRChord
       @chord.leave
     end
 
-    def put(key, value, hash_calculate = true)
+    def put(key, value, calculate_hash = true)
       return false if key == nil
 
-      id = hash_calculate ? Zlib.crc32(key) : key
+      id = calculate_hash ? Zlib.crc32(key) : key
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
@@ -49,17 +49,11 @@ module DRChord
         return true
       else
         begin
-          return DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value, hash_calculate)
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).put(key, value, calculate_hash)
         rescue DRb::DRbConnError
           return false
         end
       end
-    end
-
-    def get_local(key)
-      id = Zlib.crc32(key)
-      ret = @hash_table.fetch(id, nil)
-      return ret == nil || ret == false ? false : ret
     end
 
     def get(key)
@@ -77,18 +71,8 @@ module DRChord
         # 新規参加ノードが新たな Key の担当ノードとなった場合
         # 加入時委譲が正しく行われず目的の Key-Value が後継ノードに残る場合がある
         if ret == nil || ret == false
-          candidates_list.each do |candidate_node|
-            if candidate_node.id != @chord.id
-              begin
-                ret = DRbObject::new_with_uri(candidate_node.uri("dhash")).get_local(key)
-                break if ret != nil && ret != false
-              rescue DRb::DRbConnError
-                next
-              end
-            end
-          end
+          request_to_candidates(key, candidates_list)
         end
-
         return ret == nil || ret == false ? false : ret
       else
         begin
@@ -100,6 +84,12 @@ module DRChord
           retry
         end
       end
+    end
+
+    def get_local(key)
+      id = Zlib.crc32(key)
+      ret = @hash_table.fetch(id, nil)
+      return ret == nil || ret == false ? false : ret
     end
 
     def delete(key)
@@ -123,6 +113,21 @@ module DRChord
           return false
         end
       end
+    end
+
+    private
+    def request_to_candidates(key, candidates_list)
+      candidates_list.each do |candidate_node|
+        if candidate_node.id != @chord.id
+          begin
+            ret = DRbObject::new_with_uri(candidate_node.uri("dhash")).get_local(key)
+            return ret if ret != nil && ret != false
+          rescue DRb::DRbConnError
+            next
+          end
+        end
+      end
+      return false
     end
   end
 end
