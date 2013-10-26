@@ -7,7 +7,7 @@ require 'yaml'
 class MultipleNodes
   include Chukan
 
-  attr_accessor :nodes
+  attr_accessor :node_list, :nodes
   def initialize
     node_list_path = File.join(File.expand_path(File.dirname(__FILE__)), 'node_list.yml')
     @node_list = YAML::load_file(node_list_path)[:node_list]
@@ -36,21 +36,23 @@ AfterConfiguration do
 end
 
 When /^: ノードに接続できる$/ do
-  @front = DRbObject::new_with_uri("druby://127.0.0.1:11000")
+  uri = "druby://#{node_list.last}"
+  @front = DRbObject::new_with_uri(uri)
   @front.active?.should == true
 end
 
 When /^: Key\-value を put する$/ do
-  @ret = @front.dhash.put("hoge", "huga")
+  @value = @key = node_list.first
+  @ret = @front.dhash.put(@key, @value)
 end
 
 When /^: Value を get する$/ do
-  @ret = @front.dhash.get("hoge")
+  @ret = @front.dhash.get(@key)
 end
 
 When /^: get した結果が put した Key\-Value と一致する$/ do
-  result = @front.dhash.get("hoge")
-  result.should == "huga"
+  result = @front.dhash.get(@key)
+  result.should == @value
 end
 
 When /^: put を引数 nil で実行する$/ do
@@ -58,7 +60,7 @@ When /^: put を引数 nil で実行する$/ do
 end
 
 When /^: Key\-Value を delete する$/ do
-  @ret = @front.dhash.delete("hoge")
+  @ret = @front.dhash.delete(@key)
 end
 
 When /^: delete を引数 nil で実行する$/ do
