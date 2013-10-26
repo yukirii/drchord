@@ -199,13 +199,13 @@ module DRChord
     def successor_candidates(id, max_number)
       list = []
       begin
-        predecessor_node = DRbObject::new_with_uri(find_predecessor(id).uri)
-        list = predecessor_node.successor_list
+        successor_node = DRbObject::new_with_uri(find_successor(id).uri)
+        list << successor_node.info
+        list += successor_node.successor_list
       rescue DRb::DRbConnError
         begin
-          successor_node = DRbObject::new_with_uri(find_successor(id).uri)
-          list << successor_node.info
-          list += successor_node.successor_list
+          predecessor_node = DRbObject::new_with_uri(find_predecessor(id).uri)
+          list = predecessor_node.successor_list
         rescue DRb::DRbConnError
           return false
         end

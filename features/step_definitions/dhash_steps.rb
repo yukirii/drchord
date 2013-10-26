@@ -37,8 +37,14 @@ AfterConfiguration do
   multiple_nodes.start
 end
 
-When /^: ノードに接続できる$/ do
+Given /^: ノードに接続できる$/ do
   uri = "druby://#{node_list.last}"
+  @front = DRbObject::new_with_uri(uri)
+  @front.active?.should == true
+end
+
+Given /^: (\d+) 番目のノードに接続する$/ do |arg1|
+  uri = "druby://#{node_list[arg1.to_i]}"
   @front = DRbObject::new_with_uri(uri)
   @front.active?.should == true
 end
@@ -84,4 +90,24 @@ end
 
 When /^: Key の 担当ノードを Kill する$/ do
   nodes.first.kill
+end
+
+Given /^: Key\-value を delete する$/ do
+  @key = node_list.first
+  @ret = @front.dhash.delete(@key)
+end
+
+When /^: Key の 担当ノードを再 join する$/ do
+  nodes[0] = spawn("ruby main.rb -p #{node_list.first.split(":")[1]} -e #{node_list.last}")
+  nodes[0].stderr_join(/.*\sset\ssuccessor.*/)
+  sleep 1
+end
+
+When /^: stabilize が行われている間でも Value が正しく get できる$/ do
+  10.times do
+    step ": Value を get する"
+    step ": 戻り値が nil, false でない"
+    step ": get した結果が put した Key-Value と一致する"
+    sleep 1
+  end
 end
