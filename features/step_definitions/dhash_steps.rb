@@ -2,20 +2,22 @@
 
 require 'drb/drb'
 require 'chukan'
+require 'yaml'
 
 class MultipleNodes
   include Chukan
-  NUM_OF_NODES = 5
 
   attr_accessor :nodes
   def initialize
+    node_list_path = File.join(File.expand_path(File.dirname(__FILE__)), 'node_list.yml')
+    @node_list = YAML::load_file(node_list_path)[:node_list]
     @nodes = []
   end
 
   def start
-    NUM_OF_NODES.times do |i|
-      cmd = "ruby main.rb -p 1#{i}000"
-      cmd += " -e localhost:1#{i-1}000" if i != 0
+    @node_list.each_with_index do |node, i|
+      cmd = "ruby main.rb -p #{node.split(":")[1]}"
+      cmd += " -e #{@node_list[i-1]}" if i != 0
       node = spawn(cmd)
       node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
       @nodes << node
