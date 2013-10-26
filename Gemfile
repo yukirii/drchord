@@ -1,3 +1,9 @@
 source "https://rubygems.org"
 
-gem 'rspec'
+gem 'colored'
+
+group :test do
+  gem 'rspec'
+  gem 'cucumber'
+  gem 'chukan'
+end

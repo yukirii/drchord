@@ -14,10 +14,5 @@ describe DRChord::Node do
       @front.dhash.start
     end
   end
-
-  it "Chord にアクセスできる" do
-    uri = @chord.info.uri
-    expect(DRbObject.new_with_uri(uri).id).to eq(@chord.id)
-  end
 end
 
