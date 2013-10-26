@@ -37,12 +37,6 @@ AfterConfiguration do
   multiple_nodes.start
 end
 
-Given /^: ノードに接続できる$/ do
-  uri = "druby://#{node_list.last}"
-  @front = DRbObject::new_with_uri(uri)
-  @front.active?.should == true
-end
-
 Given /^: (\d+) 番目のノードに接続する$/ do |arg1|
   uri = "druby://#{node_list[arg1.to_i]}"
   @front = DRbObject::new_with_uri(uri)
