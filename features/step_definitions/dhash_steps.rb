@@ -5,7 +5,7 @@ require 'colored'
 require 'chukan'
 require 'yaml'
 
-class MultipleNodes
+class NodeManager
   include Chukan
 
   attr_accessor :node_list, :nodes
@@ -27,14 +27,14 @@ class MultipleNodes
   end
 end
 
-multiple_nodes = MultipleNodes.new
+node_manager = NodeManager.new
 
 World do
-  multiple_nodes
+  node_manager
 end
 
 AfterConfiguration do
-  multiple_nodes.start
+  node_manager.start
 end
 
 Given /^: (\d+) 番目のノードに接続する$/ do |arg1|
