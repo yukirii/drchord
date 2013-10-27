@@ -8,6 +8,7 @@ require 'optparse'
 require 'drb/drb'
 
 module DRChord
+  # dRuby サーバの公開を行い DRChord のサービスを提供する
   class Front
     attr_reader :options, :chord, :dhash
     def initialize(logger)
@@ -20,14 +21,21 @@ module DRChord
       @active = true
     end
 
+    # ノードが動作しているか状態を返す
+    # @return [Boolean]
     def active?
       return @active
     end
 
+    # ノードの dRuby URI を返す
+    # @return [String] ノードの Front への参照を表す URI
     def uri
       return "druby://#{@options[:ip]}:#{@options[:port]}"
     end
 
+    # オプション付き URI を提供する
+    # @param [String] args 要求するインスタンス
+    # @return [DRbObject] オプションで指定したインスタンスの DRbObject
     def [](args)
       case args
       when "chord"; return @chord
@@ -35,6 +43,7 @@ module DRChord
       end
     end
 
+    # dRuby サーバを立ち上げサービスの提供を開始する
     def start
       begin
         DRb.start_service(uri, self, :safe_level => 1)
@@ -45,6 +54,7 @@ module DRChord
     end
 
     private
+    # コマンドライン引数のパースを行う
     def option_parser(options)
       OptionParser.new do |opt|
         opt.banner = "Usage: ruby #{File.basename($0)} [options]"
@@ -61,6 +71,7 @@ module DRChord
       return options
     end
 
+    # ノードのデフォルトオプションを返す
     def default_options
       return {:ip => '127.0.0.1', :port => 3000}
     end
