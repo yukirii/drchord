@@ -83,26 +83,6 @@ module DRChord
       return @info
     end
 
-    def join(bootstrap_node = nil)
-      if bootstrap_node.nil?
-        self.predecessor = nil
-        self.successor = @info
-      else
-        self.predecessor = nil
-        begin
-          node = DRbObject::new_with_uri(bootstrap_node)
-          self.successor = node.find_successor(self.id)
-        rescue DRb::DRbConnError => ex
-          logger.error "Connection failed - #{node.__drburi}"
-          logger.error ex.message
-          exit
-        end
-      end
-      build_finger_table(bootstrap_node)
-      build_successor_list(bootstrap_node)
-      @active = true
-    end
-
     def notify(n)
       if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
@@ -130,6 +110,26 @@ module DRChord
           sleep INTERVAL
         end
       end
+    end
+
+    def join(bootstrap_node = nil)
+      if bootstrap_node.nil?
+        self.predecessor = nil
+        self.successor = @info
+      else
+        self.predecessor = nil
+        begin
+          node = DRbObject::new_with_uri(bootstrap_node)
+          self.successor = node.find_successor(self.id)
+        rescue DRb::DRbConnError => ex
+          logger.error "Connection failed - #{node.__drburi}"
+          logger.error ex.message
+          exit
+        end
+      end
+      build_finger_table(bootstrap_node)
+      build_successor_list(bootstrap_node)
+      @active = true
     end
 
     def leave
@@ -235,8 +235,12 @@ module DRChord
 
     def stabilize
       return if active? == false
+      check_current_successor
+      get_predecessor_of_the_successor
+      succ_node.notify(@info)
+    end
 
-      # 現在の successor が生きているか調べる
+    def check_current_successor
       if self.successor != nil && alive?(self.successor.uri) == false
         logger.debug "Stabilize: Successor node failure has occurred."
 
@@ -260,8 +264,9 @@ module DRChord
           return
         end
       end
+    end
 
-      # successor の predecessor を取得
+    def get_predecessor_of_the_successor
       succ_node = DRbObject::new_with_uri(self.successor.uri)
       x = succ_node.predecessor
       if x != nil && alive?(x.uri)
@@ -269,7 +274,6 @@ module DRChord
           self.successor = x
         end
       end
-      succ_node.notify(@info)
     end
 
     def fix_fingers
