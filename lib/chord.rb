@@ -73,14 +73,6 @@ module DRChord
       @active = true
     end
 
-    def update_finger_table(s, i)
-      if self.id != s.id && Util.Ebetween(s.id, self.id, @finger[i].id)
-        @finger[i] = s
-        pred_node = DRbObject::new_with_uri(@predecessor.uri)
-        pred_node.update_finger_table(s, i)
-      end
-    end
-
     def notify(n)
       if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
