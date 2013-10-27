@@ -160,10 +160,9 @@ module DRChord
     end
 
     def successor_candidates(id, max_number)
-      list = []
       begin
         successor_node = DRbObject::new_with_uri(find_successor(id).uri)
-        list << successor_node.info
+        list = [successor_node.info]
         list += successor_node.successor_list
       rescue DRb::DRbConnError
         begin
@@ -200,8 +199,7 @@ module DRChord
     end
 
     def build_successor_list(bootstrap_node)
-      @successor_list = []
-      @successor_list << @finger[0]
+      @successor_list = [@finger[0]]
       while @successor_list.count < SLIST_SIZE
         if bootstrap_node.nil?
           @successor_list << @info
@@ -237,7 +235,6 @@ module DRChord
       return if active? == false
       check_current_successor
       get_predecessor_of_the_successor
-      succ_node.notify(@info)
     end
 
     def check_current_successor
@@ -255,8 +252,7 @@ module DRChord
           end
 
           # There is nothing we can do, its over.
-          @active = false
-          @in_ring = false
+          @active = @in_ring = false
           return
         else
           self.successor = @successor_list.first
@@ -274,6 +270,7 @@ module DRChord
           self.successor = x
         end
       end
+      succ_node.notify(@info)
     end
 
     def fix_fingers
