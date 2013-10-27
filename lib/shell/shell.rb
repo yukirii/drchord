@@ -9,7 +9,7 @@ require 'drb/drb'
 
 module DRChord
   class DHTShell
-    INTERVAL = 1
+    INTERVAL = 3
 
     def initialize(options)
       @node = DRbObject::new_with_uri(options[:node])
@@ -52,23 +52,24 @@ module DRChord
       args = input
 
       case cmd
-      when "status"
-        Util.print_node_info(@node.chord, @node.dhash)
+      when "status"; Util.print_node_info(@node.chord, @node.dhash)
       when "put"; put(args)
       when "get"; get(args)
       when "delete", "remove"; delete(args)
-      when "exit"
-        stop
-      when "help", "h", "?"
-        puts "Command list:"
-        puts "  status"
-        puts "  put"
-        puts "  delete"
-        puts "  help"
-        puts "  exit"
+      when "exit"; stop
+      when "help", "h", "?"; print_command_list
       else
         puts "Error: No such command - #{cmd}" if cmd.nil? == false && cmd.length > 0
       end
+    end
+
+    def print_command_list
+      puts "Command list:"
+      puts "  status"
+      puts "  put"
+      puts "  delete"
+      puts "  help"
+      puts "  exit"
     end
 
     def put(args)
