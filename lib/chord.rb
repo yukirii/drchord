@@ -9,11 +9,15 @@ require 'drb/drb'
 require 'logger'
 
 module DRChord
+  # Chord アルゴリズムに基づいた P2P ネットワークの構築・ルーティングを行う
   class Chord
     include Observable
 
+    # ハッシュ関数のビット数
     HASH_BIT = 32
+    # successor list のサイズ
     SLIST_SIZE = 3
+    # stabilize 処理の実行間隔
     INTERVAL = 5
 
     attr_reader :logger, :info, :finger, :successor_list, :predecessor
@@ -31,28 +35,41 @@ module DRChord
       @in_ring = false
     end
 
+    # ノードの ID を返す
+    # @return [Fixnum] ノードの IP:Port から計算したハッシュ値
     def id
       return @info.id
     end
 
+    # ノードが動作しているか状態を返す
+    # @return [boolean]
     def active?
       return @active
     end
 
+    # successor ノードの情報 (finger[0]) を返す
+    # @return [NodeInfomation] successor ノードの情報を表す NodeInfomation クラスのインスタンス
     def successor
       return @finger[0]
     end
 
+    # successor ノードの情報 (finger[0]) を変更する
+    # @param [NodeInfomation] node successor ノードの情報を表す NodeInfomation クラスのインスタンス
     def successor=(node)
       @finger[0] = node
       logger.debug "set successor = #{@finger[0].uri}"
     end
 
+    # predecessor ノードの情報を変更する
+    # @param [NodeInfomation] node predecessor ノードの情報を表す NodeInfomation クラスのインスタンス
     def predecessor=(node)
       @predecessor = node
       logger.debug "set predecessor = #{node.nil? ? "nil" : node.uri}"
     end
 
+    # 指定した ID の successor ノードを探す
+    # @param [Fixnum] id 対象となる ID
+    # @return [NodeInfomation] ID の successor ノードの情報を表す NodeInformation クラスのインスタンス
     def find_successor(id)
       if Util.betweenE(id, self.id, self.successor.id)
         return self.successor
@@ -63,6 +80,9 @@ module DRChord
       end
     end
 
+    # 指定した ID の predecessor ノードを探す
+    # @param [Fixnum] id 対象となる ID
+    # @return [NodeInfomation] ID の predecessor ノードの情報を表す NodeInformation クラスのインスタンス
     def find_predecessor(id)
       return @predecessor if id == self.id
 
@@ -74,6 +94,9 @@ module DRChord
       return n1.info
     end
 
+    # ID 空間上でノード ID と指定した ID の範囲に位置するノード情報を finger table から探す
+    # @param [Fixnum] id 対象となる ID
+    # @return [NodeInfomation] NodeInformation クラスのインスタンス
     def closest_preceding_finger(id)
       (HASH_BIT-1).downto(0) do |i|
         if Util.between(@finger[i].id, self.id, id)
@@ -83,6 +106,8 @@ module DRChord
       return @info
     end
 
+    # 引数で与えられたノードが新しい predecessor である場合更新する
+    # @param [NodeInformation] n 新たな predecessor 候補
     def notify(n)
       if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
@@ -97,6 +122,8 @@ module DRChord
       end
     end
 
+    # Chord ノードの動作を開始する
+    # @param [String] bootstrap_node 既にネットワークに参加しているノードの URI
     def start(bootstrap_node)
       join(bootstrap_node)
       @chord_thread = Thread.new do
@@ -112,6 +139,8 @@ module DRChord
       end
     end
 
+    # Chord ネットワークに参加する
+    # @param [String] bootstrap_node 既にネットワークに参加しているノードの URI
     def join(bootstrap_node = nil)
       if bootstrap_node.nil?
         self.predecessor = nil
@@ -132,6 +161,7 @@ module DRChord
       @active = true
     end
 
+    # Chord ネットワークから離脱する
     def leave
       logger.info "Node #{@info.uri} leaving..."
       @chord_thread.kill
@@ -145,12 +175,18 @@ module DRChord
       @active = false
     end
 
+    # ノードの successor に predecessor が離脱することを通知する
+    # @param [NodeInfomation] node 離脱するノードの情報（自ノード）
+    # @param [NodeInfomation] new_predecessor 新たな predecessor となるノードの情報（自ノードの predecessor）
     def notify_predecessor_leaving(node, new_predecessor)
       if node == @predecessor
         self.predecessor = new_predecessor
       end
     end
 
+    # ノードの predecessor に successor が離脱することを通知する
+    # @param [NodeInformation] node 離脱するノードの情報（自ノード）
+    # @param [Array <NodeInformation>] successors 新たな successor_list となるリスト（自ノードの successor_list）
     def notify_successor_leaving(node, successors)
       if node == self.successor
         @successor_list.delete_at(0)
@@ -159,6 +195,10 @@ module DRChord
       end
     end
 
+    # id の successor 候補のリストを作成する
+    # @param [Fixnum] id 対象となる ID
+    # @param [Fixnum] max_number リストの最大サイズ
+    # @return [Array <NodeInformation>] successor 候補の格納された Array
     def successor_candidates(id, max_number)
       begin
         successor_node = DRbObject::new_with_uri(find_successor(id).uri)
