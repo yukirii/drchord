@@ -8,6 +8,7 @@ require  File.expand_path(File.join(drchord_dir, '/replication_manager.rb'))
 require "zlib"
 
 module DRChord
+  # ハッシュテーブルの基本機能を提供する
   class DHash
     attr_reader :logger, :chord, :replication
     attr_accessor :hash_table
@@ -18,6 +19,8 @@ module DRChord
       @hash_table = {}
     end
 
+    # DHT ノードを立ち上げる
+    # @param [Object] bootstrap DHT に既に参加しているノードの接続情報
     def start(bootstrap = nil)
       logger.info "Ctrl-C to shutdown node"
       begin
@@ -30,12 +33,18 @@ module DRChord
       end
     end
 
+    # DHT ノードを終了する
     def shutdown
       logger.info "going to shutdown..."
       @replication.stop
       @chord.leave
     end
 
+    # DHT に Key-Value を保存する
+    # @param [String] key 保存したい Value に対応付ける Key
+    # @param [String] value 保存したい Value
+    # @param [Boolean] calculate_hash Key のハッシュ値を計算する場合 true, しない場合 false
+    # @return [Boolean] Key-Value の保存に成功した場合 true, 失敗した場合 false
     def put(key, value, calculate_hash = true)
       return false if key == nil
 
@@ -56,6 +65,10 @@ module DRChord
       end
     end
 
+    # DHT に保存されている Value を取得する
+    # @param [String] key 取得したい Value に対応付けた Key
+    # @return [String] Key に対応付けられた Value
+    # @return [Boolean] Value の取得に失敗した場合 false
     def get(key)
       return false if key == nil
 
@@ -84,12 +97,21 @@ module DRChord
       end
     end
 
+    # DHT に保存されている Value を取得する
+    #
+    # 他のノードへのリクエスト転送は行わず、自ノードの hash_table のみを探索する
+    # @param [String] key 取得したい Value に対応付けた Key
+    # @return [String] Key に対応付けられた Value
+    # @return [Boolean] Value の取得に失敗した場合 false
     def get_local(key)
       id = Zlib.crc32(key)
       ret = @hash_table.fetch(id, nil)
       return ret != nil && ret != false ? ret : false
     end
 
+    # DHT に保存されている Key-Value を削除する
+    # @param [String] key 削除したい Value に対応付けた Key
+    # @return [Boolean] 削除に成功した場合 true, 失敗した場合 false
     def delete(key)
       return false if key == nil
 
@@ -114,6 +136,9 @@ module DRChord
     end
 
     private
+    # Key を持っている候補のリストに get_local リクエストを行う
+    # @return [String] Key に対応付けられた Value
+    # @return [Boolean] Value の取得に失敗した場合 false
     def request_to_candidates(key, candidates_list)
       candidates_list.each do |candidate_node|
         if candidate_node.id != @chord.id
