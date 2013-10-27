@@ -8,9 +8,13 @@ require  File.expand_path(File.join(drchord_dir, '/dhash.rb'))
 require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 
 module DRChord
+  # Key-Value のレプリカの管理を行う
   class ReplicationManager
+    # 自動再 put の間隔
     INTERVAL = 30
+    # successor list のサイズ
     SLIST_SIZE = 3
+    # レプリカ作成数
     NUMBER_OF_COPIES = 3
 
     attr_reader :logger
@@ -21,6 +25,7 @@ module DRChord
       @chord.add_observer(self, :transfer)
     end
 
+    # 自動再 put を行うスレッドを開始する
     def start
       @reput_thread = Thread.new do
         loop do
@@ -30,11 +35,14 @@ module DRChord
       end
     end
 
+    # 自動再 put を行うスレッドを停止する
     def stop
       @reput_thread.kill
     end
 
-    # 新規レプリカの配置処理
+    # レプリカの新規作成・配置処理を行う
+    # @param [Fixnum] id Key (String) のハッシュ値
+    # @param [String] value Key に対応する Value
     def create(id, value)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |s|
@@ -45,7 +53,8 @@ module DRChord
       end
     end
 
-    # レプリカの削除
+    # レプリカを削除する
+    # @param [Fixnum] id Key (String) のハッシュ値
     def delete(id)
       candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
       candidates_list.each do |s|
@@ -56,7 +65,9 @@ module DRChord
       end
     end
 
-    # 加入時移譲
+    # 加入時移譲処理を行う
+    #
+    # DHT に既に存在する Key-Value のうち、新規加入した自ノードが新たな担当となる場合に Key-Value の委譲を受ける
     def transfer
       cnt = 0
       while cnt < 3
@@ -82,6 +93,10 @@ module DRChord
       logger.debug "Key-Value transfer - failed. "
     end
 
+    # 新規加入ノードへ委譲する Key-Value を準備する
+    # @param [Fixnum] pred 新規加入ノードの predecessor の ID
+    # @param [Fixnum] node_id 新規加入ノードの ID
+    # @return [Hash] 委譲する Key-Value ペアの格納された Hash
     def request_kv_pair(pred, node_id)
       kv_pair = {}
       @dhash.hash_table.each do |key, value|
@@ -93,7 +108,7 @@ module DRChord
     end
 
     private
-    # 自動再 put
+    # hash_table に持っている Key-Value ペアを DHT に再 put する
     def reput
       return false if @chord.active? == false
 
@@ -108,6 +123,9 @@ module DRChord
       end
     end
 
+    # Key-Value の担当もしくは担当候補ノードであるか調べる
+    # @param [Fixnum] key 調べる Key-Value の Key
+    # @return [boolean] 担当である場合 true, そうでない場合 false
     def keys_owner?(key)
       if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == true
         return true
