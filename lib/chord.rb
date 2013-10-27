@@ -57,7 +57,6 @@ module DRChord
       if bootstrap_node.nil?
         self.predecessor = nil
         self.successor = @info
-        (HASH_BIT-1).times { @finger << @info }
       else
         self.predecessor = nil
         begin
@@ -68,38 +67,10 @@ module DRChord
           logger.error ex.message
           exit
         end
-        build_finger_table(bootstrap_node)
       end
-
-      @successor_list = []
-      @successor_list << @finger[0]
-      while @successor_list.count < SLIST_SIZE
-        if bootstrap_node.nil?
-          @successor_list << @info
-        else
-          last_node = DRbObject::new_with_uri(@successor_list.last.uri)
-          @successor_list << last_node.successor
-        end
-      end
-
+      build_finger_table(bootstrap_node)
+      build_successor_list(bootstrap_node)
       @active = true
-    end
-
-    def build_finger_table(bootstrap_node)
-      node = DRbObject::new_with_uri(bootstrap_node)
-      0.upto(HASH_BIT-2) do |i|
-        if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
-          @finger[i+1] = @finger[i]
-        else
-          begin
-            @finger[i+1] = node.find_successor(finger_start(i+1))
-          rescue DRb::DRbConnError => ex
-            logger.error "Connection failed - #{node.__drburi}"
-            logger.error ex.message
-            exit
-          end
-        end
-      end
     end
 
     def update_finger_table(s, i)
@@ -234,6 +205,40 @@ module DRChord
 
     def finger_start(k)
       return (self.id + 2**k) % 2**HASH_BIT
+    end
+
+    def build_successor_list(bootstrap_node)
+      @successor_list = []
+      @successor_list << @finger[0]
+      while @successor_list.count < SLIST_SIZE
+        if bootstrap_node.nil?
+          @successor_list << @info
+        else
+          last_node = DRbObject::new_with_uri(@successor_list.last.uri)
+          @successor_list << last_node.successor
+        end
+      end
+    end
+
+    def build_finger_table(bootstrap_node)
+      if bootstrap_node.nil?
+        return (HASH_BIT-1).times { @finger << @info }
+      else
+        node = DRbObject::new_with_uri(bootstrap_node)
+        0.upto(HASH_BIT-2) do |i|
+          if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
+            @finger[i+1] = @finger[i]
+          else
+            begin
+              @finger[i+1] = node.find_successor(finger_start(i+1))
+            rescue DRb::DRbConnError => ex
+              logger.error "Connection failed - #{node.__drburi}"
+              logger.error ex.message
+              exit
+            end
+          end
+        end
+      end
     end
 
     def stabilize
