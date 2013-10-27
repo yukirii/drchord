@@ -57,7 +57,7 @@ module DRChord
     end
 
     # 加入時移譲
-    def transfer(predecessor)
+    def transfer
       cnt = 0
       while cnt < 3
         candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)

@@ -53,40 +53,6 @@ module DRChord
       logger.debug "set predecessor = #{node.nil? ? "nil" : node.uri}"
     end
 
-    def join(bootstrap_node = nil)
-      if bootstrap_node.nil?
-        self.predecessor = nil
-        self.successor = @info
-      else
-        self.predecessor = nil
-        begin
-          node = DRbObject::new_with_uri(bootstrap_node)
-          self.successor = node.find_successor(self.id)
-        rescue DRb::DRbConnError => ex
-          logger.error "Connection failed - #{node.__drburi}"
-          logger.error ex.message
-          exit
-        end
-      end
-      build_finger_table(bootstrap_node)
-      build_successor_list(bootstrap_node)
-      @active = true
-    end
-
-    def notify(n)
-      if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
-        self.predecessor = n
-
-        # 加入時委譲処理の要求
-        if @in_ring == false
-          @in_ring = true
-          changed
-          notify_observers(nil)
-          logger.debug("Join network complete.")
-        end
-      end
-    end
-
     def find_successor(id)
       if Util.betweenE(id, self.id, self.successor.id)
         return self.successor
@@ -115,6 +81,40 @@ module DRChord
         end
       end
       return @info
+    end
+
+    def join(bootstrap_node = nil)
+      if bootstrap_node.nil?
+        self.predecessor = nil
+        self.successor = @info
+      else
+        self.predecessor = nil
+        begin
+          node = DRbObject::new_with_uri(bootstrap_node)
+          self.successor = node.find_successor(self.id)
+        rescue DRb::DRbConnError => ex
+          logger.error "Connection failed - #{node.__drburi}"
+          logger.error ex.message
+          exit
+        end
+      end
+      build_finger_table(bootstrap_node)
+      build_successor_list(bootstrap_node)
+      @active = true
+    end
+
+    def notify(n)
+      if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
+        self.predecessor = n
+
+        # 加入時委譲処理の要求
+        if @in_ring == false
+          @in_ring = true
+          changed
+          notify_observers
+          logger.debug("Join network complete.")
+        end
+      end
     end
 
     def start(bootstrap_node)
