@@ -9,7 +9,7 @@ require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 
 module DRChord
   # Key-Value のレプリカの管理を行う
-  class ReplicationManager
+  class ReplManager
     # 自動再 put の間隔
     INTERVAL = 30
     # successor list のサイズ

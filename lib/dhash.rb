@@ -4,7 +4,7 @@
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
-require  File.expand_path(File.join(drchord_dir, '/replication_manager.rb'))
+require  File.expand_path(File.join(drchord_dir, '/repl_manager.rb'))
 require "zlib"
 
 module DRChord
@@ -15,7 +15,7 @@ module DRChord
     def initialize(chord, logger)
       @logger = logger || Logger.new(STDERR)
       @chord = chord
-      @replication = ReplicationManager.new(self, logger)
+      @replication = ReplManager.new(self, logger)
       @hash_table = {}
     end
 
