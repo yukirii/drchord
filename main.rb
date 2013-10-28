@@ -11,20 +11,5 @@ rescue LoadError
 end
 
 require File.expand_path(File.join(drchord_dir, '/lib/front.rb'))
-require File.expand_path(File.join(drchord_dir, '/lib/util.rb'))
-require 'logger'
-
-logger = Logger.new(STDERR)
-logger.level = Logger::DEBUG
-
-front = DRChord::Front.new(logger)
+front = DRChord::Front.new
 front.start
-
-Thread.new do
-  logger.info "Press the enter key to print node info..."
-  loop do
-    DRChord::Util.print_node_info(front.chord, front.dhash) if gets == "\n"
-  end
-end
-
-front.dhash.start(front.options[:bootstrap_node])

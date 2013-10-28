@@ -22,15 +22,10 @@ module DRChord
     # DHT ノードを立ち上げる
     # @param [Object] bootstrap DHT に既に参加しているノードの接続情報
     def start(bootstrap = nil)
-      logger.info "Ctrl-C to shutdown node"
-      begin
-        @chord_thread = @chord.start(bootstrap)
-        @replication_thread = @replication.start
-        @chord_thread.join
-        @replication_thread.join
-      rescue Interrupt
-        shutdown
-      end
+      @chord_thread = @chord.start(bootstrap)
+      @replication_thread = @replication.start
+      @chord_thread.join
+      @replication_thread.join
     end
 
     # DHT ノードを終了する

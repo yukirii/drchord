@@ -8,16 +8,11 @@ require 'drb/drb'
 describe DRChord::Front do
   before do
     @default_options = {:ip => '127.0.0.1', :port => 3000}
-    @front = DRChord::Front.new(nil)
+    @front = DRChord::Front.new
   end
 
   it "druby uri が返される" do
     expect(@front.uri).to eq("druby://#{@default_options[:ip]}:#{@default_options[:port]}")
-  end
-
-  it "start で DRb.start_service が呼ばれる" do
-    DRb.should_receive(:start_service).with(@front.uri, @front, :safe_level => 1)
-    @front.start
   end
 
   context 'オプション付き URI 指定時' do

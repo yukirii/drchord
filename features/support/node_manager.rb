@@ -21,7 +21,7 @@ class NodeManager
       cmd = "ruby main.rb -p #{node.split(":")[1]}"
       cmd += " -e #{@node_list[i-1]}" if i != 0
       node = spawn(cmd)
-      node.stderr_join(/.*\sJoin\snetwork\scomplete.*/)
+      node.stdout_join(/.*\sJoin\snetwork\scomplete.*/)
       @nodes << node
     end
   end

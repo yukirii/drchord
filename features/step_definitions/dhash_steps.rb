@@ -56,7 +56,7 @@ end
 
 When /^: Key の 担当ノードを再 join する$/ do
   nodes[0] = spawn("ruby main.rb -p #{node_list.first.split(":")[1]} -e #{node_list.last}")
-  nodes[0].stderr_join(/.*\sset\ssuccessor.*/)
+  nodes[0].stdout_join(/.*\sset\ssuccessor.*/)
   sleep 1
 end
 
