@@ -20,7 +20,7 @@ class NodeManager
       puts "#{i+1}: Startup node - #{node}".green
       cmd = "ruby main.rb -p #{node.split(":")[1]}"
       cmd += " -e #{@node_list[i-1]}" if i != 0
-      node = spawn(cmd)
+      node = spawn(cmd).set_display("DRChord Node ##{i+1}")
       node.stdout_join(/.*\sJoin\snetwork\scomplete.*/)
       @nodes << node
     end
