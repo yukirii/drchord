@@ -14,11 +14,15 @@ module DRChord
   class Front
     attr_reader :logger, :chord, :dhash
     def initialize
+      @options = option_parser(default_options)
+
       STDOUT.sync = true
       @logger = Logger.new(STDOUT)
-      @logger.level = Logger::DEBUG
-
-      @options = option_parser(default_options)
+      if @options[:debug] == true
+        @logger.level = Logger::DEBUG
+      else
+        @logger.level = Logger::INFO
+      end
 
       @chord = Chord.new(@options, @logger)
       @dhash = DHash.new(@chord, @logger)
@@ -64,7 +68,7 @@ module DRChord
     private
     # ノードのデフォルトオプションを返す
     def default_options
-      return {:ip => '127.0.0.1', :port => 3000}
+      return {:ip => '127.0.0.1', :port => 3000, :bootstrap_node => nil, :debug => nil}
     end
 
     # コマンドライン引数のパースを行う
@@ -74,6 +78,7 @@ module DRChord
         opt.on('-i --ip', 'ip address') {|v| options[:ip] = v }
         opt.on('-p --port', 'port') {|v| options[:port] = v.to_i }
         opt.on('-e --bootstrap_node', 'bootstrap node (existing node)  IP_ADDR:PORT') {|v| options[:bootstrap_node] = "druby://#{v}?chord" }
+        opt.on('-d', '--debug', 'enable show debug massage') { options[:debug] = true }
         opt.on_tail('-h', '--help', 'show this message') {|v| puts opt; exit }
         begin
           opt.parse!
