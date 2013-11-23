@@ -18,7 +18,7 @@ class NodeManager
   def start
     @node_list.each_with_index do |node, i|
       puts "#{i+1}: Startup node - #{node}".green
-      cmd = "ruby main.rb -p #{node.split(":")[1]}"
+      cmd = "ruby main.rb -d -p #{node.split(":")[1]}"
       cmd += " -e #{@node_list[i-1]}" if i != 0
       node = spawn(cmd).set_display("DRChord Node ##{i+1}")
       node.stdout_join(/.*\sJoin\snetwork\scomplete.*/)
