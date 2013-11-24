@@ -129,6 +129,15 @@ module DRChord
       end
     end
 
+    # key の root (successor) の候補一覧を返す
+    # @param [String] key Value に対応付けた Key
+    # @return [Array] 候補ノード情報が要素となる Array
+    def lookup_roots(key)
+      id = Zlib.crc32(key)
+      candidates_list = @chord.successor_candidates(id, 3)
+      return candidates_list.uniq
+    end
+
     private
     # Key を持っている候補のリストに get_local リクエストを行う
     # @return [String] Key に対応付けられた Value
