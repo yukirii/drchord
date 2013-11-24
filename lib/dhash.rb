@@ -135,7 +135,8 @@ module DRChord
     def lookup_roots(key)
       id = Zlib.crc32(key)
       candidates_list = @chord.successor_candidates(id, 3)
-      return candidates_list.uniq
+      candidates_list = candidates_list.uniq.map{|x| x.uri("dhash") }
+      return candidates_list
     end
 
     private
