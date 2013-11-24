@@ -44,11 +44,13 @@ module DRChord
     # @param [Fixnum] id Key (String) のハッシュ値
     # @param [String] value Key に対応する Value
     def create(id, value)
-      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
-      candidates_list.each do |s|
-        if s.id != @chord.id
-          dhash = DRbObject::new_with_uri(s.uri("dhash"))
-          dhash.hash_table = dhash.hash_table.merge({id => value})
+      Thread.new do
+        candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+        candidates_list.each do |s|
+          if s.id != @chord.id
+            dhash = DRbObject::new_with_uri(s.uri("dhash"))
+            dhash.hash_table = dhash.hash_table.merge({id => value})
+          end
         end
       end
     end
