@@ -115,10 +115,10 @@ module DRChord
       @dhash.hash_table.each do |key, value|
         if keys_owner?(key) == false
           @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
-          logger.debug "#{@chord.info.uri("dhash")}: Delete key:#{key} value:#{value}"
+          logger.debug "#{@chord.info.uri("dhash")}: Delete key:#{key}"
         else
           @dhash.put(key, value, false)
-          logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key} value:#{value}"
+          logger.debug "#{@chord.info.uri("dhash")}: reput key:#{key}"
         end
       end
     end

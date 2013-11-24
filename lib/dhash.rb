@@ -47,8 +47,7 @@ module DRChord
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
-        logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key} value:#{value}"
-
+        logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
         @replication.create(id, value)
         return true
       else
