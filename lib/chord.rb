@@ -224,6 +224,17 @@ module DRChord
       return list[0..max_number-1]
     end
 
+    # ネットワーク上のノードが自ノードのみであるかを確かめる
+    # @return [Boolean] 自ノードのみである場合 true, そうでない場合 false
+    def is_alone?
+      unless @predecessor.nil?
+        if @predecessor.id == self.id && self.successor.id == self.id
+          return true
+        end
+      end
+      return false
+    end
+
     private
     def alive?(uri)
       begin

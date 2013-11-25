@@ -30,7 +30,9 @@ module DRChord
       @reput_thread = Thread.new do
         loop do
           sleep INTERVAL - 5 + rand(10)
-          reput
+          unless @chord.is_alone?
+            reput
+          end
         end
       end
     end

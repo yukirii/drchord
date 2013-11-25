@@ -48,7 +48,10 @@ module DRChord
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
         logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
-        @replicator.create(id, value)
+
+        unless @chord.is_alone?
+          @replicator.create(id, value)
+        end
         return true
       else
         begin
