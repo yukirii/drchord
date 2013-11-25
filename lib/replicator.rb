@@ -9,7 +9,7 @@ require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 
 module DRChord
   # Key-Value のレプリカの管理を行う
-  class ReplManager
+  class Replicator
     # 自動再 put の間隔
     INTERVAL = 30
     # successor list のサイズ
@@ -84,7 +84,7 @@ module DRChord
           pair = {}
           candidates_list.each do |n|
             dhash = DRbObject::new_with_uri(n.uri("dhash"))
-            kv_pair = dhash.replication.request_kv_pair(succs_pred.id, @chord.id)
+            kv_pair = dhash.replicator.request_kv_pair(succs_pred.id, @chord.id)
             pair = pair.merge(kv_pair)
           end
           @dhash.hash_table = @dhash.hash_table.merge(pair)

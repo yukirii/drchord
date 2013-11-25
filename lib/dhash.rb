@@ -4,18 +4,18 @@
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
-require  File.expand_path(File.join(drchord_dir, '/repl_manager.rb'))
+require  File.expand_path(File.join(drchord_dir, '/replicator.rb'))
 require "zlib"
 
 module DRChord
   # ハッシュテーブルの基本機能を提供する
   class DHash
-    attr_reader :logger, :chord, :replication
+    attr_reader :logger, :chord, :replicator
     attr_accessor :hash_table
     def initialize(chord, logger)
       @logger = logger || Logger.new(STDERR)
       @chord = chord
-      @replication = ReplManager.new(self, logger)
+      @replicator = Replicator.new(self, logger)
       @hash_table = {}
     end
 
@@ -23,15 +23,15 @@ module DRChord
     # @param [Object] bootstrap DHT に既に参加しているノードの接続情報
     def start(bootstrap = nil)
       @chord_thread = @chord.start(bootstrap)
-      @replication_thread = @replication.start
+      @replicator_thread = @replicator.start
       @chord_thread.join
-      @replication_thread.join
+      @replicator_thread.join
     end
 
     # DHT ノードを終了する
     def shutdown
       logger.info "going to shutdown..."
-      @replication.stop
+      @replicator.stop
       @chord.leave
     end
 
@@ -48,7 +48,7 @@ module DRChord
       if successor_node.id == @chord.info.id
         @hash_table.store(id, value)
         logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
-        @replication.create(id, value)
+        @replicator.create(id, value)
         return true
       else
         begin
@@ -114,7 +114,7 @@ module DRChord
       if successor_node.id == @chord.info.id
         ret = @hash_table.delete(id)
         unless ret.nil?
-          @replication.delete(id)
+          @replicator.delete(id)
           logger.debug "#{@chord.info.uri("dhash")}: delete key:#{key}"
           return true
         else
