@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
+require  File.expand_path(File.join(drchord_dir, '/config.rb'))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/replicator.rb'))
@@ -55,8 +56,8 @@ module DRChord
         end
         logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
 
-        unless @chord.is_alone?
-          @replicator.create(id, value)
+        if DRChord::REPLICATION
+          @replicator.create(id, value) unless @chord.is_alone?
         end
         return true
       else
