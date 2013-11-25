@@ -5,17 +5,21 @@ drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/replicator.rb'))
+require "monitor"
 require "zlib"
 
 module DRChord
   # ハッシュテーブルの基本機能を提供する
   class DHash
+    include MonitorMixin
+
     attr_reader :logger, :chord, :replicator
     attr_accessor :hash_table
     def initialize(chord, logger)
       @logger = logger || Logger.new(STDERR)
       @chord = chord
       @replicator = Replicator.new(self, logger)
+      @monitor = Monitor.new
       @hash_table = {}
     end
 
@@ -46,7 +50,9 @@ module DRChord
       id = calculate_hash ? Zlib.crc32(key) : key
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
-        @hash_table.store(id, value)
+        @monitor.synchronize do
+          @hash_table.store(id, value)
+        end
         logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
 
         unless @chord.is_alone?
