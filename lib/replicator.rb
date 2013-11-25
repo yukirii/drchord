@@ -10,13 +10,6 @@ require  File.expand_path(File.join(drchord_dir, '/util.rb'))
 module DRChord
   # Key-Value のレプリカの管理を行う
   class Replicator
-    # 自動再 put の間隔
-    INTERVAL = 30
-    # successor list のサイズ
-    SLIST_SIZE = 3
-    # レプリカ作成数
-    NUMBER_OF_COPIES = 3
-
     attr_reader :logger
     def initialize(dhash, logger)
       @logger = logger || Logger.new(STDERR)
@@ -29,7 +22,7 @@ module DRChord
     def start
       @reput_thread = Thread.new do
         loop do
-          sleep INTERVAL - 5 + rand(10)
+          sleep DRChord::AUTO_REPUT_INTERVAL - 5 + rand(10)
           unless @chord.is_alone?
             reput
           end
@@ -47,7 +40,7 @@ module DRChord
     # @param [String] value Key に対応する Value
     def create(id, value)
       Thread.new do
-        candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+        candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
         candidates_list.each do |s|
           if s.id != @chord.id
             dhash = DRbObject::new_with_uri(s.uri("dhash"))
@@ -60,7 +53,7 @@ module DRChord
     # レプリカを削除する
     # @param [Fixnum] id Key (String) のハッシュ値
     def delete(id)
-      candidates_list = @chord.successor_candidates(id, NUMBER_OF_COPIES)
+      candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
       candidates_list.each do |s|
         if s.id != @chord.id
           dhash = DRbObject::new_with_uri(s.uri("dhash"))
@@ -75,7 +68,7 @@ module DRChord
     def transfer
       cnt = 0
       while cnt < 3
-        candidates_list = @chord.successor_candidates(@chord.id, NUMBER_OF_COPIES)
+        candidates_list = @chord.successor_candidates(@chord.id, DRChord::NUMBER_OF_COPIES)
         succs_pred = DRbObject::new_with_uri(@chord.successor.uri).predecessor
 
         if succs_pred.nil?
@@ -135,7 +128,7 @@ module DRChord
         return true
       end
 
-      candidates_list = @chord.successor_candidates(key, NUMBER_OF_COPIES)
+      candidates_list = @chord.successor_candidates(key, DRChord::NUMBER_OF_COPIES)
       candidates_list.each do |node|
         if node.id == @chord.id
           return true

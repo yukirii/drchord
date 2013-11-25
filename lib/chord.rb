@@ -13,13 +13,6 @@ module DRChord
   class Chord
     include Observable
 
-    # ハッシュ関数のビット数
-    HASH_BIT = 32
-    # successor list のサイズ
-    SLIST_SIZE = 3
-    # stabilize 処理の実行間隔
-    INTERVAL = 5
-
     attr_reader :logger, :info, :finger, :successor_list, :predecessor
     def initialize(options, logger = nil)
       @logger = logger || Logger.new(STDERR)
@@ -98,7 +91,7 @@ module DRChord
     # @param [Fixnum] id 対象となる ID
     # @return [NodeInfomation] NodeInformation クラスのインスタンス
     def closest_preceding_finger(id)
-      (HASH_BIT-1).downto(0) do |i|
+      (DRChord::HASH_BIT-1).downto(0) do |i|
         if Util.between(@finger[i].id, self.id, id)
           return @finger[i] if alive?(@finger[i].uri)
         end
@@ -134,7 +127,7 @@ module DRChord
             fix_successor_list
             fix_predecessor
           end
-          sleep INTERVAL
+          sleep DRChord::STABILIZE_INTERVAL
         end
       end
     end
@@ -246,12 +239,12 @@ module DRChord
     end
 
     def finger_start(k)
-      return (self.id + 2**k) % 2**HASH_BIT
+      return (self.id + 2**k) % 2**DRChord::HASH_BIT
     end
 
     def build_successor_list(bootstrap_node)
       @successor_list = [@finger[0]]
-      while @successor_list.count < SLIST_SIZE
+      while @successor_list.count < DRChord::SLIST_SIZE
         if bootstrap_node.nil?
           @successor_list << @info
         else
@@ -263,10 +256,10 @@ module DRChord
 
     def build_finger_table(bootstrap_node)
       if bootstrap_node.nil?
-        return (HASH_BIT-1).times { @finger << @info }
+        return (DRChord::HASH_BIT-1).times { @finger << @info }
       else
         node = DRbObject::new_with_uri(bootstrap_node)
-        0.upto(HASH_BIT-2) do |i|
+        0.upto(DRChord::HASH_BIT-2) do |i|
           if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
             @finger[i+1] = @finger[i]
           else
@@ -294,7 +287,7 @@ module DRChord
 
         @successor_list.delete_at(0)
         if @successor_list.count == 0
-          (HASH_BIT-1).downto(0) do |i|
+          (DRChord::HASH_BIT-1).downto(0) do |i|
             if alive?(@finger[i].uri) == true
               self.successor = @finger[i]
               stabilize
@@ -326,14 +319,14 @@ module DRChord
 
     def fix_fingers
       @next += 1
-      @next = 0 if @next >= HASH_BIT
+      @next = 0 if @next >= DRChord::HASH_BIT
       @finger[@next] = find_successor(finger_start(@next))
     end
 
     def fix_successor_list
       list = DRbObject::new_with_uri(self.successor.uri).successor_list
       list.unshift(self.successor)
-      @successor_list = list[0..SLIST_SIZE-1]
+      @successor_list = list[0..DRChord::SLIST_SIZE-1]
     end
 
     def fix_predecessor

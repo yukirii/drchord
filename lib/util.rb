@@ -3,9 +3,6 @@
 
 module DRChord
   class Util
-    # ハッシュ関数のビット数
-    HASH_BIT = 32
-
     # ノード情報を表示する
     # @param [Object] chord Chord クラスのインスタンス
     # @param [Object] dhash DHash クラスのインスタンス
@@ -43,7 +40,7 @@ module DRChord
         return true if initv < value && value < endv
       else
         return true if value < 0
-        return true if ((initv < value && value < 2**HASH_BIT) || (0 <= value && value < endv))
+        return true if ((initv < value && value < 2**DRChord::HASH_BIT) || (0 <= value && value < endv))
       end
       return false
     end

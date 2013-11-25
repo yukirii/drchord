@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
+require  File.expand_path(File.join(drchord_dir, '/config.rb'))
 require  File.expand_path(File.join(drchord_dir, '../util.rb'))
 require  File.expand_path(File.join(drchord_dir, '../node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '../chord.rb'))
@@ -9,8 +10,6 @@ require 'drb/drb'
 
 module DRChord
   class DHTShell
-    INTERVAL = 3
-
     def initialize(options)
       @node = DRbObject::new_with_uri(options[:node])
     end
@@ -19,7 +18,7 @@ module DRChord
       Thread.new do
         loop do
           alive_monitoring
-          sleep INTERVAL
+          sleep DRChord::DHTShell::PING_INTERVAL
         end
       end
 
