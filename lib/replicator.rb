@@ -23,9 +23,7 @@ module DRChord
       @reput_thread = Thread.new do
         loop do
           sleep DRChord::AUTO_REPUT_INTERVAL - 5 + rand(10)
-          unless @chord.is_alone?
-            reput
-          end
+          reput unless @chord.is_alone?
         end
       end
     end
@@ -39,13 +37,11 @@ module DRChord
     # @param [Fixnum] id Key (String) のハッシュ値
     # @param [String] value Key に対応する Value
     def create(id, value)
-      Thread.new do
-        candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
-        candidates_list.each do |s|
-          if s.id != @chord.id
-            dhash = DRbObject::new_with_uri(s.uri("dhash"))
-            dhash.hash_table = dhash.hash_table.merge({id => value})
-          end
+      candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
+      candidates_list.each do |s|
+        if s.id != @chord.id
+          dhash = DRbObject::new_with_uri(s.uri("dhash"))
+          dhash.store_key_value(id, value)
         end
       end
     end
@@ -57,7 +53,7 @@ module DRChord
       candidates_list.each do |s|
         if s.id != @chord.id
           dhash = DRbObject::new_with_uri(s.uri("dhash"))
-          dhash.hash_table = dhash.hash_table.reject{|key, value| key == id }
+          dhash.delete_key_value(id)
         end
       end
     end
@@ -76,13 +72,11 @@ module DRChord
           logger.debug "Key-Value transfer - Successor's predecessor is nil. retrying...(#{cnt})"
           sleep 3
         else
-          pair = {}
           candidates_list.each do |n|
             dhash = DRbObject::new_with_uri(n.uri("dhash"))
             kv_pair = dhash.replicator.request_kv_pair(succs_pred.id, @chord.id)
-            pair = pair.merge(kv_pair)
+            kv_pair.each {|k, v| @dhash.store_key_value(k, v) }
           end
-          @dhash.hash_table = @dhash.hash_table.merge(pair)
           logger.debug "Key-Value transfer - successful. "
           return true
         end
@@ -97,9 +91,7 @@ module DRChord
     def request_kv_pair(pred, node_id)
       kv_pair = {}
       @dhash.hash_table.each do |key, value|
-        if Util::betweenE(key, pred, node_id)
-          kv_pair.store(key, value)
-        end
+        kv_pair.store(key, value) if Util::betweenE(key, pred, node_id)
       end
       return kv_pair
     end
@@ -111,7 +103,7 @@ module DRChord
 
       @dhash.hash_table.each do |key, value|
         if keys_owner?(key) == false
-          @dhash.hash_table = @dhash.hash_table.reject{|k, v| k == key }
+          @dhash.delete_key_value(key)
           logger.debug "#{@chord.info.uri("dhash")}: Delete key:#{key}"
         else
           @dhash.put(key, value, false)

@@ -51,14 +51,11 @@ module DRChord
       id = calculate_hash ? Zlib.crc32(key) : key
       successor_node = @chord.find_successor(id)
       if successor_node.id == @chord.info.id
-        @monitor.synchronize do
-          @hash_table.store(id, value)
-        end
-        logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
-
+        store_key_value(id, value)
         if DRChord::REPLICATION
           @replicator.create(id, value) unless @chord.is_alone?
         end
+        logger.debug "#{@chord.info.uri("dhash")}: stored key:#{key}"
         return true
       else
         begin
@@ -147,6 +144,23 @@ module DRChord
       candidates_list = @chord.successor_candidates(id, 3)
       candidates_list = candidates_list.uniq.map{|x| x.uri("dhash") }
       return candidates_list
+    end
+
+    # 自身の hash table に Key-Value を保存する
+    # @param [String] key 保存したい Value に対応付ける Key
+    # @param [String] value 保存したい Value
+    def store_key_value(key, value)
+      @monitor.synchronize do
+        @hash_table.store(key, value)
+      end
+    end
+
+    # 自身の hash table に保存されている Key-Value を削除する
+    # @param [String] key 削除したい Value に対応付けた Key
+    def delete_key_value(key)
+      @monitor.synchronize do
+        @hash_table.delete(key)
+      end
     end
 
     private
