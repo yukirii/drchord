@@ -74,7 +74,7 @@ module DRChord
       return false if key == nil
 
       id = Zlib.crc32(key)
-      candidates_list = @chord.successor_candidates(id, 3)
+      candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
       candidates_list = candidates_list.uniq
       successor_node = candidates_list.first
 
@@ -88,12 +88,22 @@ module DRChord
         return ret == nil || ret == false ? false : ret
       else
         begin
-          DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
+          return DRbObject::new_with_uri(successor_node.uri("dhash")).get(key)
         rescue DRb::DRbConnError
           candidates_list.shift
           return false if candidates_list.empty?
           successor_node = candidates_list.first
-          retry
+
+          if successor_node.id == @chord.id
+            ret = @hash_table.fetch(id, nil)
+            if ret == nil || ret == false
+              return false
+            else
+              return ret
+            end
+          else
+            retry
+          end
         end
       end
     end
@@ -141,7 +151,7 @@ module DRChord
     # @return [Array] 候補ノード情報が要素となる Array
     def lookup_roots(key)
       id = Zlib.crc32(key)
-      candidates_list = @chord.successor_candidates(id, 3)
+      candidates_list = @chord.successor_candidates(id, DRChord::NUMBER_OF_COPIES)
       candidates_list = candidates_list.uniq.map{|x| x.uri("dhash") }
       return candidates_list
     end
@@ -172,8 +182,11 @@ module DRChord
         if candidate_node.id != @chord.id
           begin
             ret = DRbObject::new_with_uri(candidate_node.uri("dhash")).get_local(key)
-            return ret if ret != nil && ret != false
-          rescue DRb::DRbConnError; next
+            if ret != nil && ret != false
+              return ret
+            end
+          rescue DRb::DRbConnError
+            next
           end
         end
       end

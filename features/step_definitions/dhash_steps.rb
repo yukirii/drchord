@@ -47,6 +47,7 @@ end
 
 When /^: Key の 担当ノードを Kill する$/ do
   nodes.first.kill
+  nodes[1].stdout_join(/.*\Stabilize:\sSuccessor\snode\sfailure\shas\soccurred./)
 end
 
 Given /^: Key\-value を delete する$/ do
