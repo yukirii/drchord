@@ -5,7 +5,7 @@ drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/dhash.rb'))
-require  File.expand_path(File.join(drchord_dir, '/util.rb'))
+require  File.expand_path(File.join(drchord_dir, '/utils.rb'))
 
 module DRChord
   # Key-Value のレプリカの管理を行う
@@ -91,7 +91,7 @@ module DRChord
     def request_kv_pair(pred, node_id)
       kv_pair = {}
       @dhash.hash_table.each do |key, value|
-        kv_pair.store(key, value) if Util::betweenE(key, pred, node_id)
+        kv_pair.store(key, value) if Utils::betweenE(key, pred, node_id)
       end
       return kv_pair
     end
@@ -116,7 +116,7 @@ module DRChord
     # @param [Fixnum] key 調べる Key-Value の Key
     # @return [boolean] 担当である場合 true, そうでない場合 false
     def keys_owner?(key)
-      if @chord.predecessor != nil && Util::betweenE(key, @chord.predecessor.id, @chord.id) == true
+      if @chord.predecessor != nil && Utils::betweenE(key, @chord.predecessor.id, @chord.id) == true
         return true
       end
 

@@ -3,7 +3,7 @@
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/config.rb'))
-require  File.expand_path(File.join(drchord_dir, '../util.rb'))
+require  File.expand_path(File.join(drchord_dir, '../utils.rb'))
 require  File.expand_path(File.join(drchord_dir, '../node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '../chord.rb'))
 require 'drb/drb'
@@ -51,7 +51,7 @@ module DRChord
       args = input
 
       case cmd
-      when "status"; Util.print_node_info(@node.chord, @node.dhash)
+      when "status"; Utils.print_node_info(@node.chord, @node.dhash)
       when "put"; put(args)
       when "get"; get(args)
       when "delete", "remove"; delete(args)

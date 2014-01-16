@@ -3,7 +3,7 @@
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
-require  File.expand_path(File.join(drchord_dir, '/util.rb'))
+require  File.expand_path(File.join(drchord_dir, '/utils.rb'))
 require 'observer'
 require 'drb/drb'
 require 'logger'
@@ -64,7 +64,7 @@ module DRChord
     # @param [Fixnum] id 対象となる ID
     # @return [NodeInfomation] ID の successor ノードの情報を表す NodeInformation クラスのインスタンス
     def find_successor(id)
-      if Util.betweenE(id, self.id, self.successor.id)
+      if Utils.betweenE(id, self.id, self.successor.id)
         return self.successor
       else
         n1 = self.closest_preceding_finger(id)
@@ -80,7 +80,7 @@ module DRChord
       return @predecessor if id == self.id
 
       n1 = DRbObject::new_with_uri(@info.uri)
-      while Util.betweenE(id, n1.id, n1.successor.id) == false
+      while Utils.betweenE(id, n1.id, n1.successor.id) == false
         n1_info= n1.closest_preceding_finger(id)
         n1 = DRbObject::new_with_uri(n1_info.uri)
       end
@@ -92,7 +92,7 @@ module DRChord
     # @return [NodeInfomation] NodeInformation クラスのインスタンス
     def closest_preceding_finger(id)
       (DRChord::HASH_BIT-1).downto(0) do |i|
-        if Util.between(@finger[i].id, self.id, id)
+        if Utils.between(@finger[i].id, self.id, id)
           return @finger[i] if alive?(@finger[i].uri)
         end
       end
@@ -102,7 +102,7 @@ module DRChord
     # 引数で与えられたノードが新しい predecessor である場合更新する
     # @param [NodeInformation] n 新たな predecessor 候補
     def notify(n)
-      if @predecessor == nil || Util.between(n.id, @predecessor.id, self.id)
+      if @predecessor == nil || Utils.between(n.id, @predecessor.id, self.id)
         self.predecessor = n
 
         # 加入時委譲処理の要求
@@ -260,7 +260,7 @@ module DRChord
       else
         node = DRbObject::new_with_uri(bootstrap_node)
         0.upto(DRChord::HASH_BIT-2) do |i|
-          if Util.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
+          if Utils.Ebetween(finger_start(i+1), self.id,  @finger[i].id)
             @finger[i+1] = @finger[i]
           else
             begin
@@ -310,7 +310,7 @@ module DRChord
       succ_node = DRbObject::new_with_uri(self.successor.uri)
       x = succ_node.predecessor
       if x != nil && alive?(x.uri)
-        if Util.between(x.id, self.id, self.successor.id)
+        if Utils.between(x.id, self.id, self.successor.id)
           self.successor = x
         end
       end

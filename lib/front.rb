@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 drchord_dir = File.expand_path(File.dirname(__FILE__))
-require File.expand_path(File.join(drchord_dir, '/util.rb'))
+require File.expand_path(File.join(drchord_dir, '/utils.rb'))
 require File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require File.expand_path(File.join(drchord_dir, '/dhash.rb'))
 require 'optparse'
@@ -104,7 +104,7 @@ module DRChord
       Thread.new do
         logger.info "Press the enter key to print node info..."
         loop do
-          DRChord::Util.print_node_info(@chord, @dhash) if gets == "\n"
+          DRChord::Utils.print_node_info(@chord, @dhash) if gets == "\n"
         end
       end
     end

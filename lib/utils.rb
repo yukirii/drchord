@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 module DRChord
-  class Util
+  class Utils
     # ノード情報を表示する
     # @param [Object] chord Chord クラスのインスタンス
     # @param [Object] dhash DHash クラスのインスタンス
