@@ -1,6 +1,7 @@
 /.bundle
 /tmp
 /doc
+/exp
 .yardoc
 
 Gemfile.lock

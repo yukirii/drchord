@@ -6,6 +6,7 @@ require  File.expand_path(File.join(drchord_dir, '/config.rb'))
 require  File.expand_path(File.join(drchord_dir, '/chord.rb'))
 require  File.expand_path(File.join(drchord_dir, '/node_info.rb'))
 require  File.expand_path(File.join(drchord_dir, '/replicator.rb'))
+require "thread"
 require "monitor"
 require "zlib"
 
@@ -21,6 +22,7 @@ module DRChord
       @chord = chord
       @replicator = Replicator.new(self, logger)
       @monitor = Monitor.new
+      @mutex = Mutex.new
       @hash_table = {}
     end
 
@@ -160,7 +162,8 @@ module DRChord
     # @param [String] key 保存したい Value に対応付ける Key
     # @param [String] value 保存したい Value
     def store_key_value(key, value)
-      @monitor.synchronize do
+      #@monitor.synchronize do
+      @mutex.synchronize do
         @hash_table.store(key, value)
       end
     end
@@ -168,7 +171,8 @@ module DRChord
     # 自身の hash table に保存されている Key-Value を削除する
     # @param [String] key 削除したい Value に対応付けた Key
     def delete_key_value(key)
-      @monitor.synchronize do
+      #@monitor.synchronize do
+      @mutex.synchronize do
         @hash_table.delete(key)
       end
     end

@@ -248,8 +248,13 @@ module DRChord
         if bootstrap_node.nil?
           @successor_list << @info
         else
-          last_node = DRbObject::new_with_uri(@successor_list.last.uri)
-          @successor_list << last_node.successor
+          begin
+            last_node = DRbObject::new_with_uri(@successor_list.last.uri)
+            @successor_list << last_node.successor
+          rescue
+            stabilize
+            return
+          end
         end
       end
     end
@@ -307,8 +312,13 @@ module DRChord
     end
 
     def get_predecessor_of_the_successor
-      succ_node = DRbObject::new_with_uri(self.successor.uri)
-      x = succ_node.predecessor
+      begin
+        succ_node = DRbObject::new_with_uri(self.successor.uri)
+        x = succ_node.predecessor
+      rescue DRb::DRbConnError
+        return
+      end
+
       if x != nil && alive?(x.uri)
         if Utils.between(x.id, self.id, self.successor.id)
           self.successor = x
@@ -324,9 +334,13 @@ module DRChord
     end
 
     def fix_successor_list
-      list = DRbObject::new_with_uri(self.successor.uri).successor_list
-      list.unshift(self.successor)
-      @successor_list = list[0..DRChord::SLIST_SIZE-1]
+      begin
+        list = DRbObject::new_with_uri(self.successor.uri).successor_list
+        list.unshift(self.successor)
+        @successor_list = list[0..DRChord::SLIST_SIZE-1]
+      rescue DRb::DRbConnError
+        return
+      end
     end
 
     def fix_predecessor
