@@ -2,6 +2,7 @@
 /tmp
 /doc
 /exp
+/vender
 .yardoc
 
 Gemfile.lock
