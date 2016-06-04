@@ -5,7 +5,7 @@
 /vender
 .yardoc
 
-Gemfile.lock
-config.yml
 .DS_store
 .*.swp
+
+config.yml
