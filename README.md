@@ -53,3 +53,7 @@ Value: world
 > delete hello
 Key & Value deleted. - (hello)
 ```
+
+## Licence
+
+[MIT](https://github.com/shiftky/drchord/blob/master/LICENCE)
