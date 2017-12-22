@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 gem 'colored'
-gem 'yard'
+gem 'yard', '~> 0.9.12'
 
 group :test do
   gem 'rspec'
